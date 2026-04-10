@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aslam Archispace — Master ERP v22</title>
+  <title>Aslam Archispace — Master ERP v23</title>
   <style>
 /* ============================================================
    §1 — CSS: Variables, Layout, Typography, Components
@@ -953,10 +953,12 @@ input, select, textarea { font-family: inherit; }
   height: 200%;
   object-fit: cover;
   display: block;
-  cursor: pointer;
-  transition: transform 0.48s cubic-bezier(.4, 0, .2, 1);
+  cursor: crosshair;
+  /* Smooth 0.55s pan — mimics the GIF rotation feel */
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translate(0%, 0%);    /* default: 0° → Front */
   will-change: transform;
+  image-rendering: high-quality;
 }
 
 /* Semi-transparent branded watermarks */
@@ -1107,7 +1109,7 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
   </div>
   <nav id="sb-nav"></nav>
   <div id="sb-footer">
-    <span>Aslam Archispace</span> · ERP v22.0<br>
+    <span>Aslam Archispace</span> · ERP v23.0<br>
     Ejigbo, Osun State · Nigeria
   </div>
 </aside>
@@ -1616,7 +1618,7 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
  * ============================================================
  */
 
-const APP_VERSION = 'v22.0';
+const APP_VERSION = 'v23.0';
 const APP_NAME    = 'Aslam Archispace';
 
 /* ── OpenRouter endpoint (exact URL required) ─────────────── */
@@ -3253,6 +3255,8 @@ function _injectHeroBox(url, type, style) {
  * The 2×2 grid image is placed at 200%×200% inside overflow:hidden.
  * Four view buttons pan the image via transform:translate() to
  * reveal the correct quadrant — creating the rotation illusion.
+ * The viewport is given extra height and a dark background to
+ * evoke the premium 3D-viewer feel of the reference GIF.
  *
  * @param {string} url - image URL or data URI from Flux
  */
@@ -3263,75 +3267,132 @@ function _injectDynamicBox(url) {
 
   el.innerHTML = `
     <!-- ══ RIGHT: 360° Dynamic Inspector ═════════════════════════ -->
-    <div class="render-box-head">
-      <h3>🔄 360° Dynamic Inspector</h3>
-      <span class="pc-badge status-done" style="font-size:.68rem">2×2 Grid</span>
+    <div class="render-box-head" style="background:var(--navy)">
+      <h3 style="color:var(--gold)">🔄 360° Dynamic Inspector</h3>
+      <span class="pc-badge" style="font-size:.68rem;background:rgba(201,168,76,.2);
+                                     color:var(--gold)">2×2 Grid</span>
+    </div>
+
+    <!-- Angle arc indicator strip -->
+    <div style="background:var(--navy);padding:8px 14px;
+                display:flex;align-items:center;gap:8px;
+                border-bottom:1px solid rgba(201,168,76,.15)">
+      <span style="font-size:.68rem;color:rgba(201,168,76,.6);
+                   font-family:var(--font-m);letter-spacing:.05em">VIEWING ANGLE</span>
+      <div style="flex:1;height:3px;background:rgba(201,168,76,.15);
+                  border-radius:2px;overflow:hidden">
+        <div id="rot-angle-bar" style="height:100%;width:0%;
+             background:var(--gold);border-radius:2px;
+             transition:width .48s cubic-bezier(.4,0,.2,1)"></div>
+      </div>
+      <span id="rot-angle-deg" style="font-size:.72rem;color:var(--gold);
+             font-family:var(--font-m);font-weight:700;min-width:36px;
+             text-align:right">0°</span>
     </div>
 
     <!--
-      overflow:hidden crops the 200%×200% image to one quadrant.
-      transform:translate() driven by the view buttons pans between quadrants.
-      aspect-ratio:1/1 keeps the viewport square so each quadrant is equal.
+      DYNAMIC VIEWER:
+        overflow:hidden crops the 200%×200% image to one quadrant.
+        transform:translate() pans between the 4 building elevations.
+        aspect-ratio:1/1 keeps the viewport square.
+        The CSS .quad-img transition (0.55s) creates the smooth pan effect.
     -->
-    <div class="render-viewport" style="aspect-ratio:1/1;overflow:hidden">
+    <div class="render-viewport" style="aspect-ratio:1/1;overflow:hidden;
+                                        background:#0a0e1a;cursor:crosshair">
       <img src="${url}"
            id="render-rot-img"
            class="quad-img"
-           alt="2×2 architectural grid — use buttons to rotate"
-           onerror="this.alt='Image failed to load'">
+           alt="4-elevation architectural grid"
+           onerror="this.style.opacity='.3';this.alt='Image failed to load'">
+
+      <!-- Corner compass overlay -->
+      <div style="position:absolute;top:10px;right:10px;z-index:12;
+                  background:rgba(13,30,61,.75);backdrop-filter:blur(4px);
+                  border:1px solid rgba(201,168,76,.3);border-radius:50%;
+                  width:44px;height:44px;display:flex;align-items:center;
+                  justify-content:center">
+        <svg id="rot-compass" width="28" height="28" viewBox="0 0 28 28"
+             style="transition:transform .48s cubic-bezier(.4,0,.2,1)">
+          <circle cx="14" cy="14" r="12" fill="none"
+                  stroke="rgba(201,168,76,.3)" stroke-width="1.5"/>
+          <text x="14" y="6" text-anchor="middle" font-size="5"
+                fill="rgba(201,168,76,.8)" font-family="sans-serif">N</text>
+          <text x="14" y="25" text-anchor="middle" font-size="5"
+                fill="rgba(201,168,76,.4)" font-family="sans-serif">S</text>
+          <text x="4"  y="16" text-anchor="middle" font-size="5"
+                fill="rgba(201,168,76,.4)" font-family="sans-serif">W</text>
+          <text x="24" y="16" text-anchor="middle" font-size="5"
+                fill="rgba(201,168,76,.4)" font-family="sans-serif">E</text>
+          <polygon points="14,5 12.5,14 14,13 15.5,14"
+                   fill="rgba(201,168,76,.9)"/>
+        </svg>
+      </div>
 
       <!-- Watermark: top-left -->
       <div class="render-wm-tl">🏗️ Aslam Archispace — Protected Design</div>
-
       <!-- Watermark: bottom-right -->
       <div class="render-wm-br">© 2026 Architectural ERP</div>
     </div>
 
     <!-- Active view label -->
-    <div class="rot-view-label">
-      <span>📐</span>
-      <span id="rot-view-text">Front View</span>
+    <div class="rot-view-label" style="background:rgba(13,30,61,.92)">
+      <span id="rot-view-icon">📐</span>
+      <span id="rot-view-text" style="font-size:.8rem">Front View — 0°</span>
+      <span style="margin-left:auto;font-family:var(--font-m);font-size:.65rem;
+                   color:rgba(201,168,76,.5)">TAP TO ROTATE</span>
     </div>
 
     <!--
       View buttons — each calls rotateView() with the quadrant key.
-      CSS transform values per quadrant:
-        Front View  (top-left)     → translate(0%,    0%)
-        Left Side   (top-right)    → translate(-50%,  0%)
-        Right Side  (bottom-left)  → translate(0%,   -50%)
-        Back View   (bottom-right) → translate(-50%, -50%)
+      Styled to look like premium 3D-viewer controls.
+      Quadrant / transform mapping:
+        Front View  (top-left)     → translate(0%,    0%)    0°
+        Left Side   (top-right)    → translate(-50%,  0%)   90°
+        Right Side  (bottom-left)  → translate(0%,   -50%) 180°
+        Back View   (bottom-right) → translate(-50%, -50%) 270°
     -->
     <div class="rot-deg-strip">
-      <button class="rot-deg-btn active" onclick="rotateView('front', this)">
-        📐 Front View
+      <button class="rot-deg-btn active"
+              onclick="rotateView('front', this, 0)">
+        <span style="font-size:.9rem">📐</span><br>
+        <span style="font-size:.68rem">Front</span>
       </button>
-      <button class="rot-deg-btn" onclick="rotateView('left', this)">
-        ◀ Left Side
+      <button class="rot-deg-btn"
+              onclick="rotateView('left', this, 90)">
+        <span style="font-size:.9rem">◀</span><br>
+        <span style="font-size:.68rem">Left Side</span>
       </button>
-      <button class="rot-deg-btn" onclick="rotateView('right', this)">
-        Right Side ▶
+      <button class="rot-deg-btn"
+              onclick="rotateView('right', this, 180)">
+        <span style="font-size:.9rem">▶</span><br>
+        <span style="font-size:.68rem">Right Side</span>
       </button>
-      <button class="rot-deg-btn" onclick="rotateView('back', this)">
-        🔄 Back View
+      <button class="rot-deg-btn"
+              onclick="rotateView('back', this, 270)">
+        <span style="font-size:.9rem">🔄</span><br>
+        <span style="font-size:.68rem">Back View</span>
       </button>
     </div>
 
-    <!-- Actions row: download full grid + hint -->
-    <div class="render-actions">
+    <!-- Actions row -->
+    <div class="render-actions" style="background:var(--navy)">
       ${isData
         ? `<a href="${url}" download="aslam-technical-grid-${Date.now()}.png"
                class="btn btn-gold btn-sm">⬇️ Full Technical Grid</a>`
         : `<a href="${url}" target="_blank"
-               class="btn btn-outline btn-sm">🔗 Open Full Grid</a>`}
-      <span class="text-sm text-muted" style="margin-left:auto">
-        💡 Tap a view button to rotate
+               class="btn btn-outline btn-sm"
+               style="color:var(--gold);border-color:rgba(201,168,76,.4)">
+               🔗 Open Full Grid</a>`}
+      <span style="margin-left:auto;font-size:.72rem;color:rgba(201,168,76,.5)">
+        All 4 elevations in one file
       </span>
     </div>`;
 }
 
 /**
  * Inject an error state into a render box.
- * Shows a collapsible DEBUG panel for raw API responses.
+ * Renders BROWSER SHIELD messages with proper line breaks.
+ * Shows collapsible DEBUG panel for raw API responses.
  *
  * @param {string} boxId  - element ID of the box to replace
  * @param {string} label  - box title for the error header
@@ -3340,27 +3401,51 @@ function _injectDynamicBox(url) {
 function _injectBoxError(boxId, label, err) {
   const el = document.getElementById(boxId);
   if (!el) return;
-  const isDebug = err?.message?.startsWith('DEBUG_RESPONSE:');
+  const msg      = err?.message || 'Unknown error';
+  const isDebug  = msg.startsWith('DEBUG_RESPONSE:');
+  const isShield = msg.includes('BROWSER SHIELD');
+  const isLocal  = msg.includes('LOCAL FILE');
+
+  let body;
+  if (isDebug) {
+    body = `
+      <details>
+        <summary style="cursor:pointer;font-weight:700;color:var(--navy);
+                        font-size:.82rem;margin-bottom:8px">
+          🔍 DEBUG — Raw API Response (tap to expand)
+        </summary>
+        <pre style="font-family:var(--font-m);font-size:.68rem;
+                    white-space:pre-wrap;word-break:break-all;
+                    background:var(--navy);color:#a3e6b8;
+                    padding:12px;border-radius:6px;
+                    max-height:220px;overflow-y:auto;margin-top:6px">
+${esc(msg.replace('DEBUG_RESPONSE: ', ''))}</pre>
+      </details>`;
+  } else if (isShield) {
+    /* Brave/privacy shield message — render newlines as <br> */
+    body = `
+      <div style="background:#fff3e0;border:1.5px solid #ffb300;
+                  border-radius:var(--r);padding:14px 16px;font-size:.82rem">
+        <div style="font-weight:700;color:#e65100;margin-bottom:8px">
+          🦁 Browser Shield Blocking API
+        </div>
+        <div style="color:#5d4037;line-height:1.8;white-space:pre-line">${esc(msg.replace('BROWSER SHIELD BLOCKED — ',''))}</div>
+      </div>`;
+  } else if (isLocal) {
+    body = `
+      <div style="background:#fff3e0;border:1.5px solid #ffb300;
+                  border-radius:var(--r);padding:14px 16px;font-size:.82rem;color:#5d4037">
+        📁 ${esc(msg)}
+      </div>`;
+  } else {
+    body = `<div class="ai-panel-body" style="color:#c62828;font-size:.83rem">
+      ⚠️ ${esc(msg)}
+    </div>`;
+  }
+
   el.innerHTML = `
     <div class="render-box-head"><h3>${label}</h3></div>
-    <div style="padding:16px">
-      ${isDebug
-        ? `<details>
-             <summary style="cursor:pointer;font-weight:700;color:var(--navy);
-                             font-size:.82rem;margin-bottom:8px">
-               🔍 DEBUG — Raw API Response (tap to expand)
-             </summary>
-             <pre style="font-family:var(--font-m);font-size:.68rem;
-                         white-space:pre-wrap;word-break:break-all;
-                         background:var(--navy);color:#a3e6b8;
-                         padding:12px;border-radius:6px;
-                         max-height:220px;overflow-y:auto;margin-top:6px">
-${esc(err.message.replace('DEBUG_RESPONSE: ', ''))}</pre>
-           </details>`
-        : `<div class="ai-panel-body" style="color:#c62828;font-size:.83rem">
-             ⚠️ ${esc(err?.message || 'Unknown error')}
-           </div>`}
-    </div>`;
+    <div style="padding:14px">${body}</div>`;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -3391,24 +3476,49 @@ async function generateRender() {
   const style       = document.getElementById('ir-style').value;
   const isDynamic   = document.getElementById('ir-rotational')?.checked || false;
 
-  /* ── Prompt A: Hero Perspective (single high-quality view) ─ */
+  /* ── Prompt A: Hero Perspective ────────────────────────────
+     Target quality: photorealistic luxury residence, game-engine
+     level detail, as seen in the reference GIF (pool, landscaping,
+     dramatic lighting). Flux responds best to very specific
+     photographic / cinematic descriptors.
+  ────────────────────────────────────────────────────────────── */
   const heroPrompt =
-    `${prompt}. Building type: ${type}. View style: ${style}. ` +
-    `Nigerian architecture, Osun State tropical setting, laterite-resilient construction. ` +
-    `Ultra-high-quality photorealistic architectural render, ` +
-    `single cohesive perspective, dramatic natural lighting, clean composition.`;
+    `Photorealistic architectural render of a ${type}: ${prompt}. ` +
+    `Inspired by Nigerian/West-African luxury residential architecture. ` +
+    `Ultra-high-definition, 8K quality, Unreal Engine 5 level detail. ` +
+    `Dramatic cinematic lighting — warm golden hour sun, long shadows. ` +
+    `Lush tropical landscaping: palm trees, manicured lawn, swimming pool with ` +
+    `turquoise water reflecting the building facade. ` +
+    `Professional architectural photography composition — slight low angle, ` +
+    `three-quarter perspective view showing two elevations simultaneously. ` +
+    `Pristine concrete and render finishes, exposed stone accents, ` +
+    `large floor-to-ceiling windows with reflections. ` +
+    `${style}. Crystal-clear sky with subtle clouds. ` +
+    `Hyperrealistic textures: grass, water ripples, glass reflections, ` +
+    `roof tiles, stone paving. No people. Magazine-quality composition.`;
 
-  /* ── Prompt B: 2×2 Dynamic Grid (four-quadrant composite) ── */
+  /* ── Prompt B: 2×2 Dynamic Technical Grid ───────────────────
+     Specifically engineered for the 4-quadrant rotation illusion.
+     Each quadrant is an orthographic elevation view so the user
+     genuinely sees different sides when they pan between quadrants.
+  ────────────────────────────────────────────────────────────── */
   const gridPrompt =
-    `${prompt}. Building type: ${type}. ` +
-    `Create a single square image in a 2x2 grid layout with thin white separator lines. ` +
-    `TOP-LEFT quadrant: Front View of the building (straight-on elevation). ` +
-    `TOP-RIGHT quadrant: Left Side of the building (left profile elevation). ` +
-    `BOTTOM-LEFT quadrant: Right Side of the building (right profile elevation). ` +
-    `BOTTOM-RIGHT quadrant: Back View of the building (rear elevation). ` +
-    `Nigerian architecture, Osun State tropical setting, laterite-resilient construction. ` +
-    `Each quadrant labeled at its bottom edge. Photorealistic, equal quadrant panels, ` +
-    `clean white dividing lines, professional architectural visualisation.`;
+    `Create a single square 2x2 architectural technical grid image ` +
+    `divided by thin white lines into exactly 4 equal quadrants. ` +
+    `Building: ${type} — ${prompt}. ` +
+    `Nigerian luxury residential architecture, lush tropical setting. ` +
+    `TOP-LEFT quadrant: FRONT VIEW — straight-on photorealistic front elevation, ` +
+    `symmetrical facade, main entrance door, driveway approach, golden hour lighting. ` +
+    `TOP-RIGHT quadrant: LEFT SIDE — pure left-side profile elevation, ` +
+    `garage or secondary entrance visible, landscaping. ` +
+    `BOTTOM-LEFT quadrant: RIGHT SIDE — pure right-side profile elevation, ` +
+    `garden and pool area visible if applicable. ` +
+    `BOTTOM-RIGHT quadrant: BACK VIEW — rear elevation, ` +
+    `outdoor terrace, pool, garden, warm afternoon light. ` +
+    `Each quadrant: hyperrealistic, consistent architectural style, ` +
+    `matching tropical landscaping, swimming pool, lush lawn. ` +
+    `White grid lines 6px wide. Small label text at bottom of each quadrant. ` +
+    `Ultra-high quality, 8K, Unreal Engine 5 fidelity.`;
 
   /* ── Lock UI, build skeleton with spinners ──────────────── */
   const btn   = document.getElementById('btn-gen-render');
@@ -3491,34 +3601,53 @@ async function generateRender() {
    ────────────────────────────────────────────────────────────── */
 
 /**
- * Pan the Dynamic Inspector to a specific building view.
+ * Pan the Dynamic Inspector to a specific building elevation.
+ * Also updates the compass SVG rotation and angle progress bar.
  *
- * @param {'front'|'left'|'right'|'back'} view - target quadrant key
- * @param {HTMLElement} btnEl - clicked button (receives .active class)
+ * Quadrant / CSS transform mapping:
+ *   'front' (top-left)     → translate(0%,    0%)     0°
+ *   'left'  (top-right)    → translate(-50%,  0%)    90°
+ *   'right' (bottom-left)  → translate(0%,   -50%)  180°
+ *   'back'  (bottom-right) → translate(-50%, -50%)  270°
+ *
+ * @param {'front'|'left'|'right'|'back'} view  - quadrant key
+ * @param {HTMLElement} btnEl - clicked button (receives .active)
+ * @param {number} [deg]      - degree value for UI indicators (0/90/180/270)
  */
-function rotateView(view, btnEl) {
+function rotateView(view, btnEl, deg) {
   const img = document.getElementById('render-rot-img');
   if (!img) return;
 
-  /*
-   * Transform map — each value pans the 200%×200% image so the
-   * correct quadrant fills the 100%×100% overflow:hidden viewport.
-   */
+  /* Quadrant transform + label + compass rotation */
   const viewMap = {
-    front: { t: 'translate(0%,    0%)',   label: '📐 Front View'  },
-    left:  { t: 'translate(-50%,  0%)',   label: '◀ Left Side'    },
-    right: { t: 'translate(0%,   -50%)', label: 'Right Side ▶'   },
-    back:  { t: 'translate(-50%, -50%)', label: '🔄 Back View'    },
+    front: { t: 'translate(0%,    0%)',   icon: '📐', label: 'Front View — 0°',   cDeg:   0, barPct:  '0%'   },
+    left:  { t: 'translate(-50%,  0%)',   icon: '◀',  label: 'Left Side — 90°',   cDeg:  90, barPct:  '33%'  },
+    right: { t: 'translate(0%,   -50%)',  icon: '▶',  label: 'Right Side — 180°', cDeg: 180, barPct:  '66%'  },
+    back:  { t: 'translate(-50%, -50%)',  icon: '🔄', label: 'Back View — 270°',  cDeg: 270, barPct: '100%'  },
   };
 
   const cfg = viewMap[view] ?? viewMap.front;
 
-  /* Animate the quadrant pan */
+  /* Animate the image pan */
   img.style.transform = cfg.t;
 
-  /* Update the view label beneath the viewport */
-  const labelEl = document.getElementById('rot-view-text');
-  if (labelEl) labelEl.textContent = cfg.label;
+  /* Rotate compass needle */
+  const compass = document.getElementById('rot-compass');
+  if (compass) compass.style.transform = `rotate(${cfg.cDeg}deg)`;
+
+  /* Update angle progress bar */
+  const bar = document.getElementById('rot-angle-bar');
+  if (bar) bar.style.width = cfg.barPct;
+
+  /* Update degree display */
+  const degEl = document.getElementById('rot-angle-deg');
+  if (degEl) degEl.textContent = `${deg ?? cfg.cDeg}°`;
+
+  /* Update view icon + label */
+  const iconEl = document.getElementById('rot-view-icon');
+  const lblEl  = document.getElementById('rot-view-text');
+  if (iconEl) iconEl.textContent = cfg.icon;
+  if (lblEl)  lblEl.textContent  = cfg.label;
 
   /* Highlight active button */
   document.querySelectorAll('.rot-deg-btn').forEach(b => b.classList.remove('active'));
@@ -5628,206 +5757,196 @@ async function generateArchiveAI(pid) {
 /**
  * Core OpenRouter text completion call.
  *
+ * ROOT CAUSE OF "Failed to fetch" FIX:
+ *   Non-standard custom headers (like 'X-Enable-Caching') trigger
+ *   a CORS OPTIONS preflight request. If OpenRouter's CORS policy
+ *   doesn't explicitly whitelist that header in
+ *   Access-Control-Allow-Headers, the browser blocks the entire
+ *   request BEFORE it reaches the server — showing "Failed to fetch"
+ *   even on a properly hosted site with good wifi.
+ *
+ *   SOLUTION: Only send the minimum safe headers:
+ *     Authorization, Content-Type, HTTP-Referer, X-Title.
+ *   Prompt caching is already handled by cache_control in the
+ *   message payload (cachedSystem()) — no header needed.
+ *
  * @param {string}  model    - One of MODELS.* constants
- * @param {Array}   messages - Array of message objects (with SYS.* first)
- * @param {number}  retries  - Max retry attempts (default: MAX_RETRIES)
- * @returns {Promise<string>} - AI response text
- * @throws  {Error} on permanent failure or exhausted retries
+ * @param {Array}   messages - Array of message objects
+ * @param {number}  retries  - Max retry attempts
+ * @returns {Promise<string>} AI response text
  */
 async function callOpenRouter(model, messages, retries = MAX_RETRIES) {
   const key = DB.cfg().openrouter_key || '';
   if (!key) throw new Error('No OpenRouter API key. Please add it in Settings.');
 
-  /* Resolve token budget: free models capped at 2000 */
   const maxTok = tokensFor(model);
-
   let lastError;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
-    /* AbortController gives us a hard timeout per attempt */
     const controller = new AbortController();
     const timeoutId  = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
     try {
+      /* ── Payload — JSON.stringify required, no FormData ──── */
       const body = JSON.stringify({
         model,
         messages,
-        max_tokens:  maxTok,    /* 2000 for free, 1 for image */
+        max_tokens:  maxTok,
         temperature: 0.4,
       });
 
-      /* ── Fetch with all required OpenRouter headers ──────── */
+      /* ── Fetch: only safe headers that don't trigger preflight
+         Authorization + Content-Type + HTTP-Referer + X-Title.
+         NO custom headers like X-Enable-Caching.               */
       let resp;
       try {
         resp = await fetch(OR_BASE, {
           method:  'POST',
-          mode:    'cors',           /* explicit CORS mode */
+          mode:    'cors',
           signal:  controller.signal,
-          headers: {
-            ...buildORHeaders(key),    /* dynamic origin + auth */
-            'X-Enable-Caching': 'true',   /* activate prompt caching */
-          },
+          headers: buildORHeaders(key),   /* 4 safe headers only */
           body,
         });
       } catch (networkErr) {
         clearTimeout(timeoutId);
-
-        if (networkErr.name === 'AbortError') {
-          lastError = new Error(
-            `Request timed out after ${FETCH_TIMEOUT_MS / 1000}s — please try again.`
-          );
-        } else {
-          /* Detect Android content:// or file:// protocol — browser blocks
-             cross-origin fetch() from local files. NOT a network issue. */
-          const proto = window.location.protocol;
-          const isLocalFile = (proto === 'file:' || proto === 'content:' || proto === 'blob:');
-          if (isLocalFile) {
-            lastError = new Error(
-              'LOCAL FILE RESTRICTION — Your browser blocks API calls when the app ' +
-              'is opened directly from the file manager (content:// or file:// URL). ' +
-              'FIX: Upload this HTML file to Netlify Drop (app.netlify.com/drop — free, ' +
-              'instant) or any web host. Your API key and all data will still be saved.'
-            );
-            throw lastError; /* retrying will not help */
-          }
-          lastError = new Error(
-            `Network error — could not reach OpenRouter. ` +
-            `Check your mobile data or WiFi and try again. (${networkErr.message})`
-          );
-        }
-
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt);
-          continue;
-        }
+        lastError = _classifyNetworkError(networkErr, FETCH_TIMEOUT_MS);
+        /* Local-file errors never recover on retry */
+        if (lastError.message.includes('LOCAL FILE') ||
+            lastError.message.includes('BROWSER SHIELD')) throw lastError;
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
         throw lastError;
       }
 
       clearTimeout(timeoutId);
 
-      /* ── HTTP-level error handling ───────────────────────── */
-
-      if (resp.status === 401) {
-        /* Definitive: bad key — do not retry */
-        throw new Error('Invalid API key. Please check your OpenRouter key in Settings.');
-      }
-
-      if (resp.status === 402) {
-        /* Definitive: no credits — do not retry */
-        throw new Error(
-          'OpenRouter credits exhausted. ' +
-          'Top up at openrouter.ai/credits ' +
-          '(only Flux 2 Pro render uses paid credits — all other models are free).'
-        );
-      }
-
+      /* ── HTTP error handling ─────────────────────────────── */
+      if (resp.status === 401) throw new Error('Invalid API key — check Settings.');
+      if (resp.status === 402) throw new Error(
+        'OpenRouter credits exhausted. Top up at openrouter.ai/credits ' +
+        '(only Flux 2 Pro uses paid credits — all text models are free).');
       if (resp.status === 429) {
-        /* Rate limited — back off and retry */
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt * 2);   /* longer wait for rate limits */
-          continue;
-        }
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt * 2); continue; }
         throw new Error('Rate limit reached. Please wait a moment and try again.');
       }
-
       if (resp.status === 503 || resp.status === 502) {
-        /* Upstream model temporarily unavailable — retry */
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt);
-          continue;
-        }
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
         throw new Error(`Model temporarily unavailable (${resp.status}). Try again shortly.`);
       }
-
       if (!resp.ok) {
-        /* Other HTTP error — try to extract message from body */
-        let errMsg = `API error ${resp.status}`;
-        try {
-          const errBody = await resp.json();
-          errMsg = errBody?.error?.message || errBody?.message || errMsg;
-        } catch { /* ignore parse error, use default */ }
-
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt);
-          continue;
-        }
-        throw new Error(errMsg);
+        let msg = `API error ${resp.status}`;
+        try { const e = await resp.json(); msg = e?.error?.message || e?.message || msg; } catch {}
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
+        throw new Error(msg);
       }
 
-      /* ── Parse JSON response ─────────────────────────────── */
+      /* ── Parse response ──────────────────────────────────── */
       let data;
-      try {
-        data = await resp.json();
-      } catch {
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt);
-          continue;
-        }
-        throw new Error('Invalid JSON returned from OpenRouter. Please try again.');
+      try { data = await resp.json(); } catch {
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
+        throw new Error('Invalid JSON from OpenRouter. Please retry.');
       }
 
-      /* ── Log prompt caching savings (console only) ───────── */
+      /* Log cache savings to console (non-blocking) */
       if (data.usage?.cache_read_input_tokens) {
-        console.log(
-          `[OpenRouter Cache Hit] ${model}: ` +
-          `${data.usage.cache_read_input_tokens} tokens read from cache ` +
-          `(~75% cost reduction on system prompt)`
-        );
+        console.log(`[OR Cache Hit] ${model}: ${data.usage.cache_read_input_tokens} cached tokens`);
       }
 
-      /* ── Extract text content ────────────────────────────── */
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
-        if (attempt < retries) {
-          await sleep(RETRY_BACKOFF_MS * attempt);
-          continue;
-        }
-        throw new Error('Empty response from AI model. Please try again.');
+        if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
+        throw new Error('Empty response from AI model. Please retry.');
       }
 
-      return content;   /* SUCCESS */
+      return content;   /* ✅ SUCCESS */
 
     } catch (err) {
       clearTimeout(timeoutId);
       lastError = err;
-
-      /* Do not retry on definitive/permanent errors */
-      if (
-        err.message.includes('Invalid API key') ||
-        err.message.includes('credits exhausted') ||
-        err.message.includes('Please check your OpenRouter key')
-      ) {
-        throw err;
-      }
-
-      if (attempt < retries) {
-        await sleep(RETRY_BACKOFF_MS * attempt);
-        continue;
-      }
+      if (err.message.includes('Invalid API key') ||
+          err.message.includes('credits exhausted') ||
+          err.message.includes('LOCAL FILE') ||
+          err.message.includes('BROWSER SHIELD')) throw err;
+      if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
       throw err;
     }
   }
-
   throw lastError;
 }
 
 /* ─────────────────────────────────────────────────────────────
+   NETWORK ERROR CLASSIFIER
+   Turns raw fetch() exceptions into clear, actionable messages.
+   Called by both callOpenRouter and callOpenRouterImage.
+   ───────────────────────────────────────────────────────────── */
+
+/**
+ * Convert a raw network error into a user-friendly message.
+ * Detects: timeout, local-file restriction, browser shields (Brave).
+ *
+ * @param {Error}  err         - The caught networkErr from fetch()
+ * @param {number} timeoutMs   - The configured timeout in ms
+ * @returns {Error} New error with clear message
+ */
+function _classifyNetworkError(err, timeoutMs) {
+  /* Timeout (AbortController fired) */
+  if (err.name === 'AbortError') {
+    return new Error(`Request timed out after ${timeoutMs / 1000}s — please try again.`);
+  }
+
+  /* Local file:// / content:// (Android file manager) */
+  const proto = window.location.protocol;
+  if (proto === 'file:' || proto === 'content:' || proto === 'blob:') {
+    return new Error(
+      'LOCAL FILE RESTRICTION — Browsers block API calls from file:// URLs. ' +
+      'Upload this HTML to any web host (e.g. Netlify Drop — free, 30 sec) then open the HTTPS link.'
+    );
+  }
+
+  /*
+   * "Failed to fetch" on a hosted site has three main causes:
+   *   A) CORS preflight blocked by a non-whitelisted custom header
+   *      → Fixed in v23 by removing X-Enable-Caching
+   *   B) Browser privacy shields (Brave Shields, uBlock, etc.)
+   *      blocking cross-origin requests to openrouter.ai
+   *   C) Genuine network outage / firewall
+   *
+   * We detect B by checking if the raw message is exactly
+   * "Failed to fetch" (Chrome/Brave wording for blocked requests).
+   */
+  const raw = err.message || '';
+  if (raw === 'Failed to fetch' || raw.includes('NetworkError') ||
+      raw.includes('Load failed')) {
+    return new Error(
+      'BROWSER SHIELD BLOCKED — Your browser\'s privacy/ad blocker is ' +
+      'intercepting the OpenRouter API call.\n\n' +
+      'FIX (30 seconds):\n' +
+      '① If using Brave → tap the Brave Shield icon (🦁) in the address bar → ' +
+      'turn off "Block cross-site trackers" for this site.\n' +
+      '② If using Firefox → disable Enhanced Tracking Protection for this site.\n' +
+      '③ Or open the app in Chrome/Edge instead.\n\n' +
+      `Technical detail: ${raw}`
+    );
+  }
+
+  return new Error(
+    `Network error — could not reach OpenRouter. ` +
+    `Check your mobile data or WiFi. (${raw})`
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
    3D IMAGE GENERATION — Flux 2 Pro  (PAID model)
-   
-   Uses a separate call path because:
-   1. Image models return the URL differently (not in choices[].message.content)
-   2. No temperature/caching headers needed
-   3. max_tokens:1 (not applicable to image generation)
-   4. Response URL may be in several locations depending on OR version
+
+   Same safe-headers-only approach: only the 4 standard headers.
+   No custom headers that could trigger CORS preflight failure.
    ───────────────────────────────────────────────────────────── */
 
 /**
  * Call Flux 2 Pro via OpenRouter to generate a 3D render.
- * Returns the image URL as a string.
+ * Returns the image URL (https://) or base64 data URI.
  *
- * @param {string} prompt - Full architectural description prompt
- * @returns {Promise<string>} - Image URL
- * @throws {Error} on failure
+ * @param {string} prompt - Full architectural description
+ * @returns {Promise<string>} Image URL or data URI
  */
 async function callOpenRouterImage(prompt) {
   const key = DB.cfg().openrouter_key || '';
@@ -5839,100 +5958,59 @@ async function callOpenRouterImage(prompt) {
   let resp;
   try {
     resp = await fetch(OR_BASE, {
-      method: 'POST',
-      mode:   'cors',
-      signal: controller.signal,
-      headers: buildORHeaders(key),   /* dynamic origin + auth */
+      method:  'POST',
+      mode:    'cors',
+      signal:  controller.signal,
+      headers: buildORHeaders(key),   /* 4 safe headers — no custom headers */
       body: JSON.stringify({
-        model:      MODELS.render,      /* black-forest-labs/flux.2-pro */
+        model:      MODELS.render,
         messages:   [{ role: 'user', content: prompt }],
-        max_tokens: 1024,                  /* OR needs >1 to return image content block */
+        max_tokens: 1024,
       }),
     });
   } catch (networkErr) {
     clearTimeout(timeoutId);
-    if (networkErr.name === 'AbortError') {
-      throw new Error('Flux 2 Pro timed out after 120s — please try again.');
-    }
-    const proto = window.location.protocol;
-    if (proto === 'file:' || proto === 'content:' || proto === 'blob:') {
-      throw new Error(
-        'LOCAL FILE RESTRICTION — upload this HTML file to a web host first. ' +
-        'Try Netlify Drop (app.netlify.com/drop) — free and instant.'
-      );
-    }
-    throw new Error(
-      `Network error — could not reach Flux 2 Pro. Check your data/WiFi. (${networkErr.message})`
-    );
+    throw _classifyNetworkError(networkErr, FETCH_TIMEOUT_FLUX_MS);
   }
 
   clearTimeout(timeoutId);
 
-  if (resp.status === 401) {
-    throw new Error('Invalid API key. Check Settings.');
-  }
-  if (resp.status === 402) {
-    throw new Error(
-      'OpenRouter credits exhausted for Flux 2 Pro (this is the only paid model). ' +
-      'Top up at openrouter.ai/credits'
-    );
-  }
-  if (resp.status === 429) {
-    throw new Error('Flux 2 Pro rate limit reached. Please wait and retry.');
-  }
+  if (resp.status === 401) throw new Error('Invalid API key — check Settings.');
+  if (resp.status === 402) throw new Error(
+    'OpenRouter credits exhausted for Flux 2 Pro. Top up at openrouter.ai/credits');
+  if (resp.status === 429) throw new Error('Flux 2 Pro rate limit. Please wait and retry.');
   if (!resp.ok) {
     let msg = `Flux API error ${resp.status}`;
-    try {
-      const e = await resp.json();
-      msg = e?.error?.message || msg;
-    } catch { /* ignore */ }
+    try { const e = await resp.json(); msg = e?.error?.message || msg; } catch {}
     throw new Error(msg);
   }
 
   let data;
-  try {
-    data = await resp.json();
-  } catch {
-    throw new Error('Invalid response from Flux 2 Pro. Please try again.');
-  }
+  try { data = await resp.json(); }
+  catch { throw new Error('Invalid response from Flux 2 Pro. Please retry.'); }
 
-  const choice  = data.choices?.[0];
-  const msg     = choice?.message;
-
-  /*
-   * Flux via OpenRouter returns the image as a base64 data URI
-   * inside message.images[0].image_url.url  (not message.content).
-   * We try all known paths in priority order.
-   */
+  const choice = data.choices?.[0];
+  const msg    = choice?.message;
   let url = null;
 
-  /* 1. PRIMARY PATH (confirmed 2026):
-        choices[0].message.images[0].image_url.url → data:image/png;base64,... */
+  /* Try all known Flux response shapes in priority order */
   if (Array.isArray(msg?.images) && msg.images.length > 0) {
     url = msg.images[0]?.image_url?.url || msg.images[0]?.url || null;
   }
-
-  /* 2. Fallback: content array [{type:'image_url', image_url:{url:...}}] */
   if (!url && Array.isArray(msg?.content)) {
     for (const block of msg.content) {
       if (block?.image_url?.url) { url = block.image_url.url; break; }
       if (block?.url)            { url = block.url;           break; }
     }
   }
-
-  /* 3. Fallback: content is a plain string (data URI or https URL) */
   if (!url && typeof msg?.content === 'string' && msg.content.trim()) {
     url = msg.content.trim();
   }
-
-  /* 4. DALL-E compat path */
   if (!url) url = data.data?.[0]?.url || null;
 
-  /* Accept both https:// URLs and data: URIs (base64) */
   if (!url || typeof url !== 'string' ||
       (!url.startsWith('http') && !url.startsWith('data:'))) {
-    const rawShape = JSON.stringify(data, null, 2).slice(0, 1500);
-    throw new Error('DEBUG_RESPONSE: ' + rawShape);
+    throw new Error('DEBUG_RESPONSE: ' + JSON.stringify(data, null, 2).slice(0, 1500));
   }
 
   return url;
