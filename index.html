@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aslam Archispace — Master ERP v20</title>
+  <title>Aslam Archispace — Master ERP v21</title>
   <style>
 /* ============================================================
    §1 — CSS: Variables, Layout, Typography, Components
@@ -880,104 +880,191 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* ============================================================
-   RENDER OUTPUT — Watermark & Multi-Angle Viewport
+   RENDER OUTPUT — Dual Box Layout, Watermarks, Rotation Viewer
    ============================================================ */
 
-/* Viewport container for multi-angle quad navigation */
+/*
+ * Dual-render grid: side-by-side on desktop, stacked on mobile.
+ * Box 1 = Static perspective. Box 2 = 360° rotational (optional).
+ */
+.dual-render-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+@media (max-width: 680px) {
+  .dual-render-grid { grid-template-columns: 1fr; }
+}
+
+/* Render box — shared shell for both static and rotational */
+.render-box {
+  background: var(--white);
+  border-radius: var(--r);
+  border: 1px solid var(--grey2);
+  box-shadow: var(--sh);
+  overflow: hidden;
+}
+
+.render-box-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--grey2);
+  background: var(--white);
+}
+
+.render-box-head h3 {
+  font-family: var(--font-h);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  flex: 1;
+}
+
+/* Viewport container for render images */
 .render-viewport {
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: #000;
-  line-height: 0;   /* remove inline-block gap under img */
+  background: #0a0e1a;
+  line-height: 0;
 }
 
-/* Quad image: 200% × 200% so each quadrant = 100% of viewport */
+/* Standard (static) image */
+.render-viewport .single-img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: cover;
+  display: block;
+}
+
+/*
+ * ROTATIONAL / QUAD image
+ * Rendered at 200% × 200% so each quadrant = 100% of viewport.
+ * CSS transform: translate() snaps to the desired quadrant.
+ */
 .render-viewport .quad-img {
   width: 200%;
   height: 200%;
   object-fit: cover;
   display: block;
   cursor: pointer;
-  transition: transform 0.45s cubic-bezier(.4,0,.2,1);
-  transform: translate(0%, 0%);   /* default: Front / top-left */
+  transition: transform 0.48s cubic-bezier(.4, 0, .2, 1);
+  transform: translate(0%, 0%);    /* default: 0° → Front */
   will-change: transform;
 }
 
-/* Standard (single-angle) image */
-.render-viewport .single-img {
-  width: 100%;
-  height: auto;
-  max-height: 420px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Semi-transparent branding watermarks */
+/* Semi-transparent branded watermarks */
 .render-wm-tl,
 .render-wm-br {
   position: absolute;
   z-index: 10;
   pointer-events: none;
-  background: rgba(13, 30, 61, 0.55);   /* navy at 55% opacity */
-  color: rgba(201, 168, 76, 0.92);      /* gold text */
+  background: rgba(13, 30, 61, 0.58);
+  color: rgba(201, 168, 76, 0.95);
   font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: .68rem;
+  font-size: .64rem;
   font-weight: 600;
   letter-spacing: .04em;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: 4px;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   white-space: nowrap;
   line-height: 1.4;
 }
 
-.render-wm-tl {
-  top: 10px;
-  left: 10px;
-}
+.render-wm-tl { top: 10px; left: 10px; }
+.render-wm-br { bottom: 10px; right: 10px; text-align: right; }
 
-.render-wm-br {
-  bottom: 10px;
-  right: 10px;
-  text-align: right;
-}
-
-/* Multi-angle navigation button strip */
-.quad-nav {
+/*
+ * 360° Degree button strip — [0°] [90°] [180°] [270°]
+ * Appears below the rotational box only.
+ */
+.rot-deg-strip {
   display: flex;
   gap: 0;
   border-top: 1px solid var(--grey2);
   background: var(--navy);
 }
 
-.quad-btn {
+.rot-deg-btn {
   flex: 1;
-  padding: 9px 6px;
+  padding: 9px 4px;
   font-size: .78rem;
-  font-weight: 600;
-  color: rgba(248,247,244,.65);
+  font-weight: 700;
+  color: rgba(248, 247, 244, .6);
   background: transparent;
   border: none;
-  border-right: 1px solid rgba(201,168,76,.18);
+  border-right: 1px solid rgba(201, 168, 76, .15);
   cursor: pointer;
   transition: all .18s ease;
   letter-spacing: .02em;
+  font-family: var(--font-m);
 }
 
-.quad-btn:last-child { border-right: none; }
+.rot-deg-btn:last-child { border-right: none; }
 
-.quad-btn:hover {
-  background: rgba(201,168,76,.12);
+.rot-deg-btn:hover {
+  background: rgba(201, 168, 76, .12);
   color: var(--gold);
 }
 
-.quad-btn.active {
-  background: rgba(201,168,76,.2);
+.rot-deg-btn.active {
+  background: rgba(201, 168, 76, .22);
   color: var(--gold);
   border-bottom: 2px solid var(--gold);
 }
+
+/* View label inside rotational box */
+.rot-view-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(13, 30, 61, .85);
+  color: var(--gold);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  border-top: 1px solid rgba(201, 168, 76, .2);
+}
+
+/* Render action row (downloads) */
+.render-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 11px 14px;
+  border-top: 1px solid var(--grey2);
+  background: var(--grey1);
+}
+
+/* Quad nav (legacy single-card style — kept for render history) */
+.quad-nav {
+  display: flex; gap: 0;
+  border-top: 1px solid var(--grey2);
+  background: var(--navy);
+}
+.quad-btn {
+  flex: 1; padding: 9px 6px;
+  font-size: .78rem; font-weight: 600;
+  color: rgba(248,247,244,.65);
+  background: transparent; border: none;
+  border-right: 1px solid rgba(201,168,76,.18);
+  cursor: pointer; transition: all .18s ease;
+}
+.quad-btn:last-child { border-right: none; }
+.quad-btn:hover { background: rgba(201,168,76,.12); color: var(--gold); }
+.quad-btn.active { background: rgba(201,168,76,.2); color: var(--gold);
+                   border-bottom: 2px solid var(--gold); }
 
 /* ============================================================
    MISC UTILITIES
@@ -1020,7 +1107,7 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
   </div>
   <nav id="sb-nav"></nav>
   <div id="sb-footer">
-    <span>Aslam Archispace</span> · ERP v20.0<br>
+    <span>Aslam Archispace</span> · ERP v21.0<br>
     Ejigbo, Osun State · Nigeria
   </div>
 </aside>
@@ -1127,21 +1214,21 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
                 </select>
               </div>
             </div>
-            <!-- ── Multi-Angle Checkbox ────────────────────── -->
+            <!-- ── 360° Rotational Multi-View Checkbox ────── -->
             <div class="form-group" style="margin-bottom:12px;
                          padding:10px 12px;background:rgba(201,168,76,.06);
                          border:1px solid rgba(201,168,76,.25);border-radius:var(--r)">
               <label style="display:flex;align-items:flex-start;gap:9px;
                              cursor:pointer;font-size:.82rem;font-weight:600;
                              color:var(--navy);line-height:1.4">
-                <input type="checkbox" id="ir-multi-angle"
+                <input type="checkbox" id="ir-rotational"
                        style="width:15px;height:15px;flex-shrink:0;
                               margin-top:2px;accent-color:var(--gold);cursor:pointer">
                 <span>
-                  Enable Dynamic Multi-Angle View
+                  Include 360° Rotational Multi-View
                   <span style="display:block;font-size:.72rem;
                                color:var(--grey3);font-weight:400;margin-top:1px">
-                    Generates a 4-quadrant grid: Front · Side · Back · Perspective
+                    Makes 2 Flux calls — Static 3D + 4-quadrant rotational grid side-by-side
                   </span>
                 </span>
               </label>
@@ -1529,19 +1616,35 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
  * ============================================================
  */
 
-const APP_VERSION = 'v20.0';
+const APP_VERSION = 'v21.0';
 const APP_NAME    = 'Aslam Archispace';
 
 /* ── OpenRouter endpoint (exact URL required) ─────────────── */
 const OR_BASE = 'https://openrouter.ai/api/v1/chat/completions';
 
-/* ── Required OpenRouter headers (prevents "Failed to Fetch") */
-const OR_HEADERS = {
+/* ── Required OpenRouter headers (prevents "Failed to Fetch") ──
+   HTTP-Referer uses window.location.origin so it is always correct
+   whether the app is hosted on Netlify, GitHub Pages, or any domain.
+   X-Title identifies the app in the OpenRouter dashboard.
+   Both headers are required for free-tier models to respond.           */
+const OR_HEADERS_STATIC = {
   'Content-Type': 'application/json',
   'Accept':       'application/json',
-  'HTTP-Referer': 'https://aslam-archispace.com',   /* REQUIRED for free models — must match */
-  'X-Title':      'Aslam Archispace',               /* shown in OR dashboard */
+  'X-Title':      'Aslam Archispace Master ERP',   /* shown in OR dashboard */
 };
+
+/**
+ * Build the full header set for each request.
+ * HTTP-Referer is evaluated at call-time (not at module load) so it
+ * always reflects the actual host — critical for free-tier access.
+ */
+function buildORHeaders(apiKey) {
+  return {
+    ...OR_HEADERS_STATIC,
+    'HTTP-Referer':     window.location.origin || 'https://aslam-archispace.com',
+    'Authorization':    `Bearer ${apiKey}`,
+  };
+}
 
 /* ── Fetch timeout (ms) — handles network instability ──────── */
 const FETCH_TIMEOUT_MS      = 35000;   /* 35s — text models        */
@@ -3018,24 +3121,166 @@ Formal Nigerian business English. Portfolio-quality. Concise.`
    3D RENDER — Flux 2 Pro  (PAID model — use sparingly)
    ═══════════════════════════════════════════════════════════ */
 
+/*
+ * ══════════════════════════════════════════════════════════════
+ * §6c — 3D RENDER ENGINE
+ * ══════════════════════════════════════════════════════════════
+ *
+ * DUAL OUTPUT SYSTEM (v21):
+ *   Every render always produces Box 1 (Static 3D perspective).
+ *   When "Include 360° Rotational Multi-View" is checked, a second
+ *   Flux call runs IN PARALLEL to produce Box 2 (4-quadrant grid).
+ *
+ *   Box 1 — Static
+ *     • Single photorealistic 3D render of the building
+ *     • Watermarks: top-left + bottom-right
+ *     • "⬇️ Download Static" button
+ *
+ *   Box 2 — Rotational (optional, parallel call)
+ *     • 4-quadrant composite: Front · Side · Back · Perspective
+ *     • [0°] [90°] [180°] [270°] degree buttons
+ *     • CSS transform slides the 200%-sized image to each quadrant
+ *     • Watermarks: top-left + bottom-right
+ *     • "⬇️ Download Rotational" button
+ *
+ * PARALLEL STRATEGY:
+ *   Both Flux calls launch simultaneously via Promise.allSettled().
+ *   Each call takes ~60–90 s; parallel saves up to 90 s vs sequential.
+ *   UI shows spinners in both boxes until each resolves.
+ *
+ * ROTATION MAP (quadrant transforms):
+ *   0°   → Front Elevation  → translate(0%,   0%)   top-left
+ *   90°  → Side Elevation   → translate(-50%, 0%)   top-right
+ *   180° → Back Elevation   → translate(0%,  -50%)  bottom-left
+ *   270° → Perspective/3D   → translate(-50%,-50%)  bottom-right
+ * ══════════════════════════════════════════════════════════════
+ */
+
+/* ── Internal helper: build a watermarked render viewport ──── */
+function _renderViewport(imgId, imgClass, imgStyle, extraStyle) {
+  return `
+    <div class="render-viewport" style="${extraStyle || ''}">
+      <img id="${imgId}" class="${imgClass}" style="${imgStyle}"
+           alt="Architectural render" onerror="this.alt='Image load failed'">
+      <div class="render-wm-tl">🏗️ Aslam Archispace — Proprietary Design</div>
+      <div class="render-wm-br">© 2026 Architectural ERP</div>
+    </div>`;
+}
+
+/* ── Internal helper: spinner placeholder for a box ────────── */
+function _renderBoxSpinner(boxId, headLabel, headBadge) {
+  return `
+    <div class="render-box" id="${boxId}">
+      <div class="render-box-head">
+        <h3>${headLabel}</h3>
+        <span class="pc-badge status-planning" style="font-size:.68rem">${headBadge}</span>
+      </div>
+      <div class="ai-spinner" style="padding:28px 20px">
+        <div class="spin"></div>
+        <span>Generating via Flux 2 Pro… (60–90s)</span>
+      </div>
+    </div>`;
+}
+
+/* ── Internal helper: inject static box content ─────────────── */
+function _injectStaticBox(url, type, style) {
+  const el = document.getElementById('render-box-static');
+  if (!el) return;
+  const isData = url.startsWith('data:');
+  el.innerHTML = `
+    <div class="render-box-head">
+      <h3>🎨 Static 3D View</h3>
+      <span class="pc-badge status-active" style="font-size:.68rem">${esc(style)}</span>
+      <span class="text-sm text-muted" style="margin-left:6px">${esc(type)}</span>
+    </div>
+
+    <div class="render-viewport" style="max-height:380px">
+      <img src="${url}" class="single-img" style="max-height:380px;object-fit:cover"
+           alt="Static 3D render" onerror="this.alt='Image failed to load'">
+      <div class="render-wm-tl">🏗️ Aslam Archispace — Proprietary Design</div>
+      <div class="render-wm-br">© 2026 Architectural ERP</div>
+    </div>
+
+    <div class="render-actions">
+      ${isData
+        ? `<a href="${url}" download="static-render-${Date.now()}.png"
+               class="btn btn-gold btn-sm">⬇️ Download Static</a>`
+        : `<a href="${url}" target="_blank"
+               class="btn btn-outline btn-sm">🔗 Open Full Size</a>`}
+      <span class="text-sm text-muted" style="margin-left:auto">✅ Saved</span>
+    </div>`;
+}
+
+/* ── Internal helper: inject rotational box content ─────────── */
+function _injectRotationalBox(url) {
+  const el = document.getElementById('render-box-rot');
+  if (!el) return;
+  const isData = url.startsWith('data:');
+  el.innerHTML = `
+    <div class="render-box-head">
+      <h3>🔄 360° Rotational View</h3>
+      <span class="pc-badge status-done" style="font-size:.68rem">4-Quadrant Grid</span>
+    </div>
+
+    <!-- Quad viewport: image is 200×200% — transform reveals each quadrant -->
+    <div class="render-viewport" style="aspect-ratio:1/1">
+      <img src="${url}" id="render-rot-img" class="quad-img"
+           alt="4-quadrant rotational render" onerror="this.alt='Image failed to load'">
+      <div class="render-wm-tl">🏗️ Aslam Archispace — Proprietary Design</div>
+      <div class="render-wm-br">© 2026 Architectural ERP</div>
+    </div>
+
+    <!-- Current view label -->
+    <div class="rot-view-label" id="rot-view-label">
+      <span>📐</span> <span id="rot-view-text">Front Elevation — 0°</span>
+    </div>
+
+    <!-- Degree rotation buttons -->
+    <div class="rot-deg-strip">
+      <button class="rot-deg-btn active" onclick="rotateView(0,   this)">0°<br><span style="font-size:.62rem;font-weight:400">Front</span></button>
+      <button class="rot-deg-btn"        onclick="rotateView(90,  this)">90°<br><span style="font-size:.62rem;font-weight:400">Side</span></button>
+      <button class="rot-deg-btn"        onclick="rotateView(180, this)">180°<br><span style="font-size:.62rem;font-weight:400">Back</span></button>
+      <button class="rot-deg-btn"        onclick="rotateView(270, this)">270°<br><span style="font-size:.62rem;font-weight:400">3D</span></button>
+    </div>
+
+    <div class="render-actions">
+      ${isData
+        ? `<a href="${url}" download="rotational-render-${Date.now()}.png"
+               class="btn btn-gold btn-sm">⬇️ Download Rotational</a>`
+        : `<a href="${url}" target="_blank"
+               class="btn btn-outline btn-sm">🔗 Open Full Size</a>`}
+      <span class="text-sm text-muted" style="margin-left:auto">
+        💡 Tap degree buttons to rotate
+      </span>
+    </div>`;
+}
+
+/* ── Internal helper: inject error into a box ───────────────── */
+function _injectBoxError(boxId, label, err) {
+  const el = document.getElementById(boxId);
+  if (!el) return;
+  const isDebug = err.message?.startsWith('DEBUG_RESPONSE:');
+  el.innerHTML = `
+    <div class="render-box-head"><h3>${label}</h3></div>
+    <div class="ai-panel-body" style="padding:16px;color:#c62828">
+      ${isDebug
+        ? `<details><summary style="cursor:pointer;font-weight:700">🔍 DEBUG — tap to expand</summary>
+           <pre style="font-size:.68rem;white-space:pre-wrap;word-break:break-all;margin-top:8px;
+                       max-height:200px;overflow-y:auto;color:var(--navy)">
+             ${esc(err.message.replace('DEBUG_RESPONSE: ', ''))}</pre></details>`
+        : `⚠️ ${esc(err.message)}`}
+    </div>`;
+}
+
 /**
- * Generate a 3D render from a text prompt via Flux 2 Pro.
- * Saves the render URL to the project for use in quotation PDFs.
+ * Main render entry point — called by the "✨ Generate" button.
  *
- * MULTI-ANGLE MODE:
- *   When #ir-multi-angle is checked, the prompt instructs Flux to
- *   produce a 4-quadrant composite:
- *     top-left    → Front Elevation
- *     top-right   → Side Elevation
- *     bottom-left → Back Elevation
- *     bottom-right→ Perspective / 3D View
- *   The result renders inside a .render-viewport container that is
- *   twice the natural size; clicking the nav buttons translates the
- *   image to reveal the correct quadrant.
- *
- * WATERMARKS:
- *   Both single-angle and multi-angle results display two branded
- *   overlays via .render-wm-tl / .render-wm-br CSS classes.
+ * FLOW:
+ *   1. Build static prompt  (always)
+ *   2. Build rotational prompt  (only if #ir-rotational checked)
+ *   3. Show dual-box skeleton with spinners
+ *   4. Launch BOTH Flux calls in parallel via Promise.allSettled()
+ *   5. Inject results into each box as they resolve
  */
 async function generateRender() {
   const prompt = document.getElementById('ir-prompt').value.trim();
@@ -3044,182 +3289,148 @@ async function generateRender() {
   const key = DB.cfg().openrouter_key || '';
   if (!key) { toast('Add OpenRouter API key in Settings', 'wn'); SP('settings'); return; }
 
-  const type       = document.getElementById('ir-type').value;
-  const style      = document.getElementById('ir-style').value;
-  const isMulti    = document.getElementById('ir-multi-angle')?.checked || false;
+  const type         = document.getElementById('ir-type').value;
+  const style        = document.getElementById('ir-style').value;
+  const isRotational = document.getElementById('ir-rotational')?.checked || false;
 
-  /* ── Build prompt (single-angle OR 4-quadrant) ────────────── */
-  let full;
-  if (isMulti) {
-    /*
-     * 4-QUADRANT MODE
-     * Instructs Flux to produce a single composite image split into
-     * four equal panels with clearly labeled views.
-     */
-    full =
-      `${prompt}. Building type: ${type}. ` +
-      `Create a single composite image divided into exactly 4 equal quadrants ` +
-      `with thin white separator lines: ` +
-      `TOP-LEFT = Front Elevation view, ` +
-      `TOP-RIGHT = Side Elevation view, ` +
-      `BOTTOM-LEFT = Back Elevation view, ` +
-      `BOTTOM-RIGHT = Perspective/3D aerial view. ` +
-      `Each quadrant labeled with its view name. ` +
-      `Nigerian architecture, Osun State tropical setting. ` +
-      `Laterite-resilient construction, climate-appropriate design. ` +
-      `Ultra-high-quality photorealistic architectural visualisation, ` +
-      `4-panel split composite, equal quadrant panels, clean white dividers.`;
-  } else {
-    /* SINGLE-ANGLE MODE — original behaviour */
-    full =
-      `${prompt}. Building type: ${type}. View style: ${style}. ` +
-      `Nigerian architecture, Osun State tropical setting. ` +
-      `Laterite-resilient construction, climate-appropriate design. ` +
-      `Ultra-high-quality architectural visualisation, photorealistic rendering.`;
-  }
+  /* ── Prompt 1: Standard 3D perspective ──────────────────── */
+  const staticPrompt =
+    `${prompt}. Building type: ${type}. View style: ${style}. ` +
+    `Nigerian architecture, Osun State tropical setting. ` +
+    `Laterite-resilient construction, climate-appropriate design. ` +
+    `Ultra-high-quality photorealistic architectural visualisation, ` +
+    `single cohesive perspective, dramatic lighting, clean background.`;
 
+  /* ── Prompt 2: 4-quadrant rotational composite ───────────── */
+  const rotPrompt =
+    `${prompt}. Building type: ${type}. ` +
+    `Create a single square composite image divided into exactly 4 equal quadrants ` +
+    `with thin white separator lines and labels: ` +
+    `TOP-LEFT = "Front Elevation" (0°, head-on front view), ` +
+    `TOP-RIGHT = "Side Elevation" (90°, right-side profile), ` +
+    `BOTTOM-LEFT = "Back Elevation" (180°, rear view), ` +
+    `BOTTOM-RIGHT = "3D Perspective" (270°, aerial 3D isometric). ` +
+    `Nigerian architecture, Osun State tropical setting. ` +
+    `Laterite-resilient construction. Ultra-high-quality photorealistic rendering, ` +
+    `4-panel split composite, equal quadrant panels, clean white dividers, ` +
+    `each panel labeled in small text at bottom.`;
+
+  /* ── UI: lock button, show skeleton boxes ────────────────── */
   const btn   = document.getElementById('btn-gen-render');
   const resEl = document.getElementById('ir-results');
   btn.disabled    = true;
   btn.textContent = '⏳ Generating…';
 
-  const modeLabel = isMulti
-    ? '4-Quadrant Multi-Angle Grid'
-    : esc(type);
+  resEl.innerHTML = `
+    <div class="dual-render-grid" id="dual-render-grid"
+         style="${isRotational ? '' : 'grid-template-columns:1fr'}">
+      ${_renderBoxSpinner('render-box-static', '🎨 Static 3D View', 'Flux 2 Pro')}
+      ${isRotational
+        ? _renderBoxSpinner('render-box-rot', '🔄 360° Rotational View', 'Flux 2 Pro')
+        : ''}
+    </div>`;
 
-  resEl.innerHTML = `<div class="ai-spinner">
-    <div class="spin"></div>
-    <span>Generating ${isMulti ? '4-quadrant ' : ''}3D render via Flux 2 Pro…
-          (60–90s, paid model)</span>
-  </div>`;
+  /* ── Launch both Flux calls in PARALLEL ─────────────────── */
+  const [staticRes, rotRes] = await Promise.allSettled([
+    callOpenRouterImage(staticPrompt),
+    isRotational ? callOpenRouterImage(rotPrompt) : Promise.resolve(null),
+  ]);
 
-  try {
-    const url = await callOpenRouterImage(full);
+  /* ── Handle Static result ────────────────────────────────── */
+  if (staticRes.status === 'fulfilled' && staticRes.value) {
+    const url = staticRes.value;
 
-    /* Persist render to project */
+    /* Save to project */
     if (_currentProjId) {
       const p = DB.proj(_currentProjId);
       if (p) {
         p.renders = p.renders || [];
-        p.renders.unshift({
-          id:       uid(),
-          prompt:   full,
-          url,
-          isMulti,
-          ts:       Date.now()
-        });
+        p.renders.unshift({ id: uid(), prompt: staticPrompt, url, isRot: false, ts: Date.now() });
         DB.saveProj(p);
       }
     }
-
-    const isDataUri  = url.startsWith('data:');
-
-    /* ── Build the result card ────────────────────────────── */
-
-    /* Quadrant navigation markup (only for multi-angle renders) */
-    const quadNav = isMulti ? `
-      <div class="quad-nav">
-        <button class="quad-btn active" id="qb-front"
-                onclick="showQuadrant('front',this)">📐 Front</button>
-        <button class="quad-btn" id="qb-side"
-                onclick="showQuadrant('side',this)">↔️ Side</button>
-        <button class="quad-btn" id="qb-back"
-                onclick="showQuadrant('back',this)">🔄 Back</button>
-        <button class="quad-btn" id="qb-3d"
-                onclick="showQuadrant('3d',this)">🎯 3D</button>
-      </div>` : '';
-
-    /*
-     * Viewport dimensions:
-     *   Multi-angle → aspect-ratio 1/1 (square) so each half = 50%
-     *   Single      → natural height, max 420px
-     */
-    const viewportStyle = isMulti
-      ? 'aspect-ratio:1/1'
-      : 'max-height:420px';
-
-    const imgClass  = isMulti ? 'quad-img' : 'single-img';
-    const imgStyle  = isMulti
-      ? ''   /* position/size handled by CSS .quad-img */
-      : 'max-height:420px;object-fit:cover';
-
-    resEl.innerHTML = `
-      <div class="card mt-8">
-
-        <!-- Card header -->
-        <div class="card-head">
-          <h2>🎨 Generated Render</h2>
-          <span class="pc-badge status-active" style="margin-left:auto;font-size:.7rem">
-            ${isMulti ? '4-Angle Grid' : esc(style)}
-          </span>
-          <span class="text-sm text-muted" style="margin-left:8px">${esc(type)}</span>
-        </div>
-
-        <!-- Image viewport with watermarks -->
-        <div class="render-viewport" style="${viewportStyle}">
-
-          <img src="${url}"
-               id="render-quad-img"
-               class="${imgClass}"
-               style="${imgStyle}"
-               alt="${isMulti ? '4-quadrant architectural render' : '3D architectural render'}"
-               onerror="this.alt='Image failed to load'">
-
-          <!-- ── Watermark: Top-Left ────────────────────── -->
-          <div class="render-wm-tl">
-            🏗️ Aslam Archispace — Proprietary Design
-          </div>
-
-          <!-- ── Watermark: Bottom-Right ───────────────── -->
-          <div class="render-wm-br">
-            © 2026 Architectural ERP
-          </div>
-
-        </div>
-
-        <!-- Multi-angle quadrant navigation buttons -->
-        ${quadNav}
-
-        <!-- Download / actions row -->
-        <div style="padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;
-                    align-items:center;border-top:1px solid var(--grey2)">
-          ${isDataUri
-            ? `<a href="${url}" download="render-${Date.now()}.png"
-                 class="btn btn-gold btn-sm">⬇️ Download Image</a>`
-            : `<a href="${url}" target="_blank"
-                 class="btn btn-outline btn-sm">🔗 Open Full Size</a>`}
-          ${isMulti
-            ? `<span class="text-sm text-muted" style="align-self:center">
-                 💡 Click navigation buttons above to explore each view
-               </span>`
-            : ''}
-          <span class="text-sm text-muted" style="align-self:center;margin-left:auto">
-            ✅ Saved to project renders
-          </span>
-        </div>
-
-      </div>`;
-
-    toast(`3D render ${isMulti ? '(4-angle) ' : ''}generated!`, 'ok');
-
-  } catch (err) {
-    /* If it's a debug response, show the raw JSON in a scrollable box */
-    const isDebug = err.message.startsWith('DEBUG_RESPONSE:');
-    const display = isDebug
-      ? `<div style="background:#1a1a2e;color:#C9A84C;padding:14px;border-radius:8px;
-                    font-size:.72rem;font-family:monospace;white-space:pre-wrap;
-                    max-height:300px;overflow-y:auto;word-break:break-all">
-           <strong style="color:#fff;display:block;margin-bottom:8px">
-             🔍 DEBUG — Raw OpenRouter Response (copy this to Mubarak)
-           </strong>${esc(err.message.replace('DEBUG_RESPONSE: ',''))}</div>`
-      : `<div class="ai-panel-body" style="color:#c62828">⚠️ ${esc(err.message)}</div>`;
-    resEl.innerHTML = `<div class="ai-panel">${display}</div>`;
-    toast(isDebug ? 'Debug info shown below' : 'Render failed', isDebug ? 'inf' : 'err');
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = '✨ Generate';
+    _injectStaticBox(url, type, style);
+    toast('Static render ready! ✅', 'ok');
+  } else {
+    _injectBoxError('render-box-static', '🎨 Static 3D View', staticRes.reason || new Error('Unknown error'));
+    toast('Static render failed', 'err');
   }
+
+  /* ── Handle Rotational result ────────────────────────────── */
+  if (isRotational) {
+    if (rotRes.status === 'fulfilled' && rotRes.value) {
+      const url = rotRes.value;
+
+      /* Save to project separately */
+      if (_currentProjId) {
+        const p = DB.proj(_currentProjId);
+        if (p) {
+          p.renders = p.renders || [];
+          p.renders.unshift({ id: uid(), prompt: rotPrompt, url, isRot: true, ts: Date.now() });
+          DB.saveProj(p);
+        }
+      }
+      _injectRotationalBox(url);
+      toast('Rotational render ready! ✅', 'ok');
+    } else {
+      _injectBoxError('render-box-rot', '🔄 360° Rotational View', rotRes.reason || new Error('Unknown error'));
+      toast('Rotational render failed', 'wn');
+    }
+  }
+
+  /* ── Re-enable button ─────────────────────────────────────── */
+  btn.disabled    = false;
+  btn.textContent = '✨ Generate';
 }
+
+/* ══════════════════════════════════════════════════════════════
+   360° ROTATION CONTROLLER
+   ══════════════════════════════════════════════════════════════
+   Animates the 4-quadrant image by translating it within its
+   200%×200% viewport to reveal the target quadrant.
+
+   The image covers a 2×2 grid inside a 1×1 viewport:
+     0°  (Front)  → top-left     → translate(0%,    0%)
+     90° (Side)   → top-right    → translate(-50%,  0%)
+     180° (Back)  → bottom-left  → translate(0%,   -50%)
+     270° (3D)    → bottom-right → translate(-50%, -50%)
+   ══════════════════════════════════════════════════════════════ */
+
+/**
+ * Rotate the 360° view to show a specific quadrant.
+ *
+ * @param {0|90|180|270} deg   - rotation degree corresponding to a view
+ * @param {HTMLElement}  btnEl - the button clicked (for active-state highlight)
+ */
+function rotateView(deg, btnEl) {
+  const img = document.getElementById('render-rot-img');
+  if (!img) return;
+
+  /* Quadrant transform map */
+  const rotMap = {
+      0: { t: 'translate(0%,    0%)',   icon: '📐', label: 'Front Elevation — 0°'      },
+     90: { t: 'translate(-50%,  0%)',   icon: '↔️', label: 'Side Elevation — 90°'      },
+    180: { t: 'translate(0%,   -50%)',  icon: '🔄', label: 'Back Elevation — 180°'     },
+    270: { t: 'translate(-50%, -50%)',  icon: '🎯', label: 'Perspective / 3D — 270°'  },
+  };
+
+  const cfg = rotMap[deg] ?? rotMap[0];
+
+  /* Animate the quadrant slide */
+  img.style.transform = cfg.t;
+
+  /* Update view label */
+  const labelEl = document.getElementById('rot-view-text');
+  if (labelEl) labelEl.textContent = cfg.label;
+
+  /* Highlight active button */
+  document.querySelectorAll('.rot-deg-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER HISTORY
+   ══════════════════════════════════════════════════════════════ */
 
 /** Show render history grid for the current project */
 function viewRenderHistory() {
@@ -3233,86 +3444,50 @@ function viewRenderHistory() {
   }
 
   el.innerHTML = `
-    <h4 style="font-family:var(--font-h);font-size:1rem;margin:12px 0;color:var(--navy)">
-      Render History
+    <h4 style="font-family:var(--font-h);font-size:1rem;margin:12px 0 8px;color:var(--navy)">
+      Render History (${history.length})
     </h4>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
       ${history.map(r => `
-        <div class="proj-card" style="padding:0;overflow:hidden">
-          <div class="render-viewport" style="max-height:150px">
-            <img src="${r.url}" class="single-img" style="max-height:150px;object-fit:cover"
+        <div class="render-box">
+          <div class="render-viewport" style="max-height:140px">
+            <img src="${r.url}" class="single-img"
+                 style="max-height:140px;object-fit:cover"
                  onerror="this.style.display='none'">
-            <div class="render-wm-tl" style="font-size:.58rem;padding:3px 7px">
+            <div class="render-wm-tl" style="font-size:.56rem;padding:3px 7px">
               Aslam Archispace
             </div>
-            <div class="render-wm-br" style="font-size:.58rem;padding:3px 7px">
+            <div class="render-wm-br" style="font-size:.56rem;padding:3px 7px">
               © 2026 ERP
             </div>
           </div>
           <div style="padding:10px">
             <div class="text-sm text-muted mb-8">${Dt(r.ts)}</div>
-            ${r.isMulti
-              ? `<span class="pc-badge status-active" style="font-size:.65rem;margin-bottom:6px">
-                   4-Angle Grid
-                 </span><br>`
-              : ''}
-            <a href="${r.url}" target="_blank" class="btn btn-outline btn-xs">🔗 View</a>
+            <span class="pc-badge ${r.isRot ? 'status-done' : 'status-active'}"
+                  style="font-size:.62rem;margin-bottom:6px">
+              ${r.isRot ? '🔄 Rotational' : '🎨 Static'}
+            </span>
+            <div class="flex-row mt-8" style="gap:6px">
+              <a href="${r.url}" target="_blank" class="btn btn-outline btn-xs">🔗 View</a>
+              ${r.url.startsWith('data:')
+                ? `<a href="${r.url}" download="render-${r.ts}.png"
+                       class="btn btn-gold btn-xs">⬇️</a>`
+                : ''}
+            </div>
           </div>
         </div>`).join('')}
     </div>`;
 }
 
-/*
- * ──────────────────────────────────────────────────────────────
- * QUADRANT NAVIGATOR — Multi-Angle 3D Render
- * ──────────────────────────────────────────────────────────────
- * Works with .render-viewport / .quad-img CSS:
- *   The image is rendered at 200% × 200% of the viewport.
- *   Translating by 0%/−50% in each axis reveals one of four
- *   equal quadrants (each = 100% of the visible viewport).
- *
- * Quadrant map:
- *   Front  → top-left     → translate(0%,   0%)
- *   Side   → top-right    → translate(-50%, 0%)
- *   Back   → bottom-left  → translate(0%,   -50%)
- *   3D     → bottom-right → translate(-50%, -50%)
- *
- * The CSS transition (0.45s ease) animates the slide between views.
- * ──────────────────────────────────────────────────────────────
- */
-
-/**
- * Slide the 4-quadrant render to show a specific architectural view.
- *
- * @param {'front'|'side'|'back'|'3d'} view - target quadrant
- * @param {HTMLElement} btnEl - the button that was clicked (for active state)
- */
+/* Legacy single-card quadrant nav (kept for DI overlay renders) */
 function showQuadrant(view, btnEl) {
   const img = document.getElementById('render-quad-img');
   if (!img) return;
-
-  /* CSS transform values — each pair reveals one 50% × 50% quadrant */
-  const quadMap = {
-    front: 'translate(0%,   0%)',    /* top-left     — Front Elevation  */
-    side:  'translate(-50%, 0%)',    /* top-right    — Side Elevation   */
-    back:  'translate(0%,   -50%)', /* bottom-left  — Back Elevation   */
-    '3d':  'translate(-50%, -50%)', /* bottom-right — Perspective View */
-  };
-
-  img.style.transform = quadMap[view] || 'translate(0%, 0%)';
-
-  /* Update active button state */
+  const m = { front: 'translate(0%,0%)', side: 'translate(-50%,0%)',
+               back: 'translate(0%,-50%)', '3d': 'translate(-50%,-50%)' };
+  img.style.transform = m[view] || 'translate(0%,0%)';
   document.querySelectorAll('.quad-btn').forEach(b => b.classList.remove('active'));
   if (btnEl) btnEl.classList.add('active');
-
-  /* Micro-feedback toast */
-  const labels = {
-    front: '📐 Front Elevation',
-    side:  '↔️ Side Elevation',
-    back:  '🔄 Back Elevation',
-    '3d':  '🎯 Perspective View',
-  };
-  toast(labels[view] || view, 'inf');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -5376,12 +5551,11 @@ async function callOpenRouter(model, messages, retries = MAX_RETRIES) {
       let resp;
       try {
         resp = await fetch(OR_BASE, {
-          method: 'POST',
-          mode:   'cors',           /* explicit CORS mode */
-          signal: controller.signal,
+          method:  'POST',
+          mode:    'cors',           /* explicit CORS mode */
+          signal:  controller.signal,
           headers: {
-            ...OR_HEADERS,
-            'Authorization':    `Bearer ${key}`,
+            ...buildORHeaders(key),    /* dynamic origin + auth */
             'X-Enable-Caching': 'true',   /* activate prompt caching */
           },
           body,
@@ -5559,10 +5733,7 @@ async function callOpenRouterImage(prompt) {
       method: 'POST',
       mode:   'cors',
       signal: controller.signal,
-      headers: {
-        ...OR_HEADERS,
-        'Authorization': `Bearer ${key}`,
-      },
+      headers: buildORHeaders(key),   /* dynamic origin + auth */
       body: JSON.stringify({
         model:      MODELS.render,      /* black-forest-labs/flux.2-pro */
         messages:   [{ role: 'user', content: prompt }],
