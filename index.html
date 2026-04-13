@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aslam Archispace — Master ERP v24</title>
+  <title>Aslam Archispace — Master ERP v25</title>
   <style>
 /* ============================================================
    §1 — CSS: Variables, Layout, Typography, Components
@@ -1605,20 +1605,21 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
 <script>
 /*
  * ============================================================
- * §0 — CONFIG & MODEL REGISTRY  (v24 Hybrid-Model)
+ * §0 — CONFIG & MODEL REGISTRY  (v25 Hybrid-Model)
  * ============================================================
  * Cost-saving routing strategy:
- *   - 3D Renders   → flux-2-pro              (PAID, use sparingly)
- *   - BOQ/Finance  → qwen3.6-plus:free       (FREE, best maths)
- *   - Vision/Audit → qwen2.5-vl-72b:free     (FREE, vision tasks)
- *   - Marketing    → gemma-4-31b:free         (FREE, fast copy)
+ *   - 3D Renders   → flux-2-pro                (PAID, use sparingly)
+ *   - BOQ/CAD      → meta-llama-3.3-70b:free   (FREE, strong general)
+ *   - Finance      → meta-llama-3.3-70b:free   (FREE, strong general)
+ *   - Vision/Audit → nvidia-nemotron-nano-12b-v2-vl:free (FREE, vision)
+ *   - Marketing    → google/gemma-4-31b:free    (FREE, fast copy)
  *
  * All free models are capped at max_tokens:2000 to prevent
  * OpenRouter "Credit Reservation" errors on the free tier.
  * ============================================================
  */
 
-const APP_VERSION = 'v24.0';
+const APP_VERSION = 'v25.0';
 const APP_NAME    = 'Aslam Archispace';
 
 /* ── OpenRouter endpoint (exact URL required) ─────────────── */
@@ -1672,13 +1673,13 @@ const FETCH_TIMEOUT_FLUX_MS = 120000;  /* 120s — Flux image gen takes 60-90s *
 const MAX_RETRIES       = 3;
 const RETRY_BACKOFF_MS  = 1500;   /* multiplied by attempt number */
 
-/* ── April 2026 OpenRouter Model IDs — exact strings required ─ */
+/* ── April 13, 2026 — LIVE OpenRouter Free Model IDs ─────── */
 const MODELS = {
   render:    'black-forest-labs/flux.2-pro',                     /* PAID  — 3D image gen     */
-  estimate:  'qwen/qwen3.6-plus:free',                           /* FREE  — maths/BOQ logic  */
-  finance:   'qwen/qwen3.6-plus:free',                           /* FREE  — ledger analysis  */
-  cad:       'qwen/qwen3.6-plus:free',                           /* FREE  — CAD/AutoLISP     */
-  vision:    'qwen/qwen2.5-vl-72b-instruct:free',               /* FREE  — plan analysis    */
+  estimate:  'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — maths/BOQ logic  */
+  finance:   'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — ledger analysis  */
+  cad:       'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — CAD/AutoLISP     */
+  vision:    'nvidia/nemotron-nano-12b-v2-vl:free',              /* FREE  — plan analysis    */
   monitor:   'google/gemma-4-31b-it:free',                       /* FREE  — site photo audit */
   marketing: 'google/gemma-4-31b-it:free',                       /* FREE  — fast ad copy     */
 };
@@ -1690,8 +1691,8 @@ const MODELS = {
  */
 const MODEL_MAX_TOKENS = {
   'black-forest-labs/flux.2-pro':                         1,     /* image — N/A */
-  'qwen/qwen3.6-plus:free':                            2000,     /* BOQ, finance, CAD */
-  'qwen/qwen2.5-vl-72b-instruct:free':                2000,     /* plan vision */
+  'meta-llama/llama-3.3-70b-instruct:free':            2000,     /* BOQ, finance, CAD */
+  'nvidia/nemotron-nano-12b-v2-vl:free':               2000,     /* plan vision */
   'google/gemma-4-31b-it:free':                        2000,     /* monitor, marketing */
 };
 
@@ -2524,7 +2525,7 @@ function deleteProject() {
  *   LEFT  — Document Intelligence (plan upload → Gemini vision)
  *   RIGHT — 3D Render generation (text prompt → Flux 2 Pro)
  *
- * Vision model:  qwen/qwen2.5-vl-72b-instruct:free
+ * Vision model:  nvidia/nemotron-nano-12b-v2-vl:free
  * Render model:  black-forest-labs/flux.2-pro  (PAID)
  *
  * PVR Audit (Plan vs Reality) runs inside the Site Report modal.
@@ -3553,6 +3554,8 @@ async function generateRender() {
       }
     }
     _injectHeroBox(url, type, style);
+    /* Store globally so ad generator can attach this render */
+    window._lastRenderUrl = url;
     toast('Hero Perspective ready ✅', 'ok');
   } else {
     _injectBoxError('render-box-static', '🎨 Hero Perspective', heroRes.reason);
@@ -3820,7 +3823,7 @@ Be concise and factual.`
  * Financial gate: BOQ total is pushed to Finance (Pillar III)
  * via releaseToPillar3().
  *
- * AI suggestions use qwen3.6-plus:free (best maths, free tier).
+ * AI suggestions use llama-3.3-70b:free (best maths, free tier).
  * ============================================================
  */
 
@@ -4271,7 +4274,7 @@ function releaseToPillar3() {
 
 /**
  * Request AI-generated BOQ items for a specific stage.
- * Uses qwen3.6-plus:free (best free maths model) with cached
+ * Uses llama-3.3-70b:free (best free maths model) with cached
  * QS Surveyor system prompt (includes Ejigbo + laterite context).
  */
 async function openStageAI(stageId) {
@@ -4377,7 +4380,7 @@ function applyAIResult() {
 
 /**
  * Full BOQ review: send all stage totals to AI for professional critique.
- * Uses qwen3.6-plus:free with cached QS Surveyor system.
+ * Uses llama-3.3-70b:free with cached QS Surveyor system.
  */
 async function openEstimateAI() {
   if (!_currentProjId) { toast('Select a project first', 'wn'); return; }
@@ -4680,7 +4683,7 @@ function printClientQuotation() {
  *     - Stage has no BOQ (est = 0) → unlocked (no estimate set)
  *     - All stages at 100%         → always unlocked
  *
- * AI audit uses qwen3.6-plus:free (best free finance logic).
+ * AI audit uses llama-3.3-70b:free (best free finance logic).
  * ============================================================
  */
 
@@ -4959,7 +4962,7 @@ function deleteRelease(pid, idx) {
 
 /**
  * Run AI cash flow + risk assessment on the project finances.
- * Uses qwen3.6-plus:free with cached financeAudit system prompt.
+ * Uses llama-3.3-70b:free with cached financeAudit system prompt.
  */
 async function runFinanceAI() {
   const pid = _currentProjId;
@@ -5025,7 +5028,7 @@ async function runFinanceAI() {
  * If locked → lock banner shown, content hidden.
  * If unlocked → stage cards rendered with site visit history.
  *
- * Vision model: qwen/qwen2.5-vl-72b-instruct:free
+ * Vision model: nvidia/nemotron-nano-12b-v2-vl:free
  * Structural audit runs inside the site report modal (PVR).
  * ============================================================
  */
@@ -5239,7 +5242,7 @@ function submitSiteReport() {
  *
  * Marketing uses google/gemma-4-31b-it:free
  * (fastest & cheapest for ad copy generation).
- * All other AI uses qwen3.6-plus:free with cached QS Surveyor.
+ * All other AI uses llama-3.3-70b:free with cached QS Surveyor.
  * ============================================================
  */
 
@@ -5331,7 +5334,7 @@ function renderStageReports() {
 
 /**
  * Generate an AI stage completion summary for the client record.
- * Uses qwen3.6-plus:free with cached QS Surveyor prompt.
+ * Uses llama-3.3-70b:free with cached QS Surveyor prompt.
  */
 async function generateStageAISummary(pid, stageId, stageLabel) {
   const key = DB.cfg().openrouter_key || '';
@@ -5473,7 +5476,7 @@ async function generateAdInline() {
   const el = document.getElementById('ad-result-inline');
   el.innerHTML = `<div class="ai-spinner">
     <div class="spin"></div>
-    <span>Crafting ad copy (Gemini Flash Lite — free tier)…</span>
+    <span>Crafting ad copy (Gemma 4 31B — free tier)…</span>
   </div>`;
 
   try {
@@ -5539,6 +5542,34 @@ async function generateAdInline() {
                   onclick="copyAdWithContact(window._lastAdCopy)">
             🔗 Copy + Contact
           </button>
+
+          <!-- Twitter / X -->
+          <button class="btn btn-sm"
+                  style="background:#000;color:#fff;gap:6px"
+                  onclick="shareToX(window._lastAdCopy)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            X / Twitter
+          </button>
+        </div>
+
+        <!-- ── Attach 3D Render to Ad ── -->
+        <div id="ad-render-attach" style="padding:10px 16px;border-top:1px solid var(--grey2)">
+          ${window._lastRenderUrl ? `
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <img src="${window._lastRenderUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid var(--gold)">
+              <div style="flex:1">
+                <div style="font-size:.75rem;font-weight:700;color:var(--navy)">📸 Latest 3D Render Available</div>
+                <div style="font-size:.7rem;color:var(--grey3)">Attach to WhatsApp / copy with ad</div>
+              </div>
+              <button class="btn btn-xs btn-gold" onclick="shareAdWithRender()">📎 Share Ad + Image</button>
+            </div>
+          ` : `
+            <div style="font-size:.72rem;color:var(--grey3);text-align:center;padding:6px">
+              💡 Generate a 3D render first (Pillar I) to attach images to your ads
+            </div>
+          `}
         </div>
       </div>`;
   } catch (err) {
@@ -5610,6 +5641,51 @@ async function copyAdWithContact(text) {
   }
 }
 
+/**
+ * Open Twitter/X with ad copy pre-filled (280 char limit).
+ * Truncates and adds link if too long.
+ */
+function shareToX(text) {
+  if (!text) { toast('Generate ad copy first', 'wn'); return; }
+  const cfg = DB.cfg();
+  const sig  = '\n📞 ' + (cfg.phone || '081444658338');
+  let tweet = text.trim();
+  /* Twitter's 280 char limit — truncate if needed */
+  const maxLen = 280 - sig.length - 5;
+  if (tweet.length > maxLen) tweet = tweet.slice(0, maxLen).trim() + '…';
+  tweet += sig;
+  const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+  window.open(url, '_blank', 'noopener');
+  toast('Opening X / Twitter…', 'inf');
+}
+
+/**
+ * Share ad copy + 3D render image via WhatsApp.
+ * If the render is a data URI, copies ad text and opens WhatsApp.
+ * If the render is an https URL, includes it in the WhatsApp message.
+ */
+function shareAdWithRender() {
+  const text = window._lastAdCopy;
+  const imgUrl = window._lastRenderUrl;
+  if (!text) { toast('Generate ad copy first', 'wn'); return; }
+  if (!imgUrl) { toast('Generate a 3D render first (Pillar I)', 'wn'); return; }
+
+  const cfg = DB.cfg();
+  let full = text.trim() + '\n\n' +
+    '📞 ' + (cfg.phone || '081444658338') + '\n' +
+    '📧 ' + (cfg.email || 'Aslamayomide5@gmail.com') + '\n' +
+    '🌐 Facebook: ' + (cfg.facebook || 'AslamArchiSpace');
+
+  /* If render URL is https, append it so WhatsApp shows preview */
+  if (imgUrl.startsWith('https://')) {
+    full += '\n\n🏠 3D Render Preview:\n' + imgUrl;
+  }
+
+  const waUrl = 'https://wa.me/?text=' + encodeURIComponent(full);
+  window.open(waUrl, '_blank', 'noopener');
+  toast('Opening WhatsApp with ad + render link…', 'ok');
+}
+
 /* ═══════════════════════════════════════════════════════════
    ARCHIVE TAB
    ═══════════════════════════════════════════════════════════ */
@@ -5671,7 +5747,7 @@ function renderArchive() {
 
 /**
  * Generate a portfolio-quality project summary for the archive.
- * Uses qwen3.6-plus:free with cached QS Surveyor system.
+ * Uses llama-3.3-70b:free with cached QS Surveyor system.
  */
 async function generateArchiveAI(pid) {
   const proj = DB.proj(pid);
@@ -5726,11 +5802,11 @@ async function generateArchiveAI(pid) {
  * §11 — OPENROUTER AI ENGINE  (Hybrid Model Router)
  * ============================================================
  *
- * ROUTING TABLE (April 2026 model IDs):
+ * ROUTING TABLE (April 13, 2026 — LIVE model IDs):
  *   render    → black-forest-labs/flux.2-pro              (PAID)
- *   estimate  → qwen/qwen3.6-plus:free                    (FREE)
- *   finance   → qwen/qwen3.6-plus:free                    (FREE)
- *   vision    → qwen/qwen2.5-vl-72b-instruct:free        (FREE)
+ *   estimate  → meta-llama/llama-3.3-70b-instruct:free    (FREE)
+ *   finance   → meta-llama/llama-3.3-70b-instruct:free    (FREE)
+ *   vision    → nvidia/nemotron-nano-12b-v2-vl:free       (FREE)
  *   monitor   → google/gemma-4-31b-it:free                (FREE)
  *   marketing → google/gemma-4-31b-it:free                (FREE)
  *
@@ -6045,7 +6121,7 @@ async function callOpenRouterImage(prompt) {
  * Generates professional AutoLISP (.lsp) scripts from project
  * data using Qwen 72B (free, best math/code model).
  *
- * ROUTING: MODELS.cad → qwen/qwen3.6-plus:free
+ * ROUTING: MODELS.cad → meta-llama/llama-3.3-70b-instruct:free
  *
  * PROMPT CONTEXT (auto-injected):
  *   • Ejigbo, Osun State location
@@ -6215,15 +6291,15 @@ function renderSettings() {
       <div style="background:var(--grey1);border-radius:var(--r);
                   padding:12px 16px;border:1px solid var(--grey2)">
         <div class="text-sm" style="font-weight:700;color:var(--navy);margin-bottom:6px">
-          💡 v24 Hybrid-Model Routing (April 2026 OpenRouter IDs)
+          💡 v25 Hybrid-Model Routing (April 13, 2026 — LIVE IDs)
         </div>
         <div class="text-sm text-muted" style="line-height:1.9">
           • <strong>3D Renders:</strong> black-forest-labs/flux.2-pro
             <span style="color:#e65100;font-weight:700">PAID — use sparingly</span><br>
-          • <strong>BOQ &amp; Finance:</strong> qwen/qwen3.6-plus:free
-            <span style="color:#2e7d32">FREE — best maths accuracy</span><br>
-          • <strong>Vision &amp; Site Audit:</strong> qwen/qwen2.5-vl-72b-instruct:free
-            <span style="color:#2e7d32">FREE — vision capable</span><br>
+          • <strong>BOQ &amp; Finance:</strong> meta-llama/llama-3.3-70b-instruct:free
+            <span style="color:#2e7d32">FREE — strong general purpose</span><br>
+          • <strong>Vision &amp; Site Audit:</strong> nvidia/nemotron-nano-12b-v2-vl:free
+            <span style="color:#2e7d32">FREE — multimodal vision</span><br>
           • <strong>Marketing Ads:</strong> google/gemma-4-31b-it:free
             <span style="color:#2e7d32">FREE — fast ad copy</span><br>
           • <strong>max_tokens:</strong> 2,000 for all free models
@@ -6238,7 +6314,7 @@ function renderSettings() {
 
     <!-- ── MODEL REGISTRY ────────────────────────────────── -->
     <div class="settings-section">
-      <h3>🤖 AI Model Registry — v24 Hybrid</h3>
+      <h3>🤖 AI Model Registry — v25 Hybrid</h3>
       <div class="text-sm text-muted mb-12">
         Only Flux 2 Pro (3D renders) uses OpenRouter credits.
         All other models are free-tier.
