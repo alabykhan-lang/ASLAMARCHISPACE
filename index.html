@@ -3145,7 +3145,7 @@ Formal Nigerian business English. Portfolio-quality. Concise.`
 
 /*
  * ╔══════════════════════════════════════════════════════════════╗
- * ║  §6c — DUAL-VIEW 3D RENDER ENGINE  (v22)                   ║
+ * ║  §6c — DUAL-VIEW 3D RENDER ENGINE  (v23)                   ║
  * ╠══════════════════════════════════════════════════════════════╣
  * ║                                                              ║
  * ║  LAYOUT:                                                     ║
@@ -3153,27 +3153,28 @@ Formal Nigerian business English. Portfolio-quality. Concise.`
  * ║    RIGHT — "360° Dynamic Inspector" (only if toggle on)     ║
  * ║                                                              ║
  * ║  API CALLS:                                                  ║
- * ║    Both Flux calls fire in PARALLEL via Promise.allSettled.  ║
- * ║    Each runs ~60–90 s. Parallel → ~90 s total vs 180 s seq. ║
- * ║    Headers on every call: Authorization, Content-Type,       ║
- * ║    HTTP-Referer (live origin), X-Title, mode:'cors'.         ║
+ * ║    ONE Flux call fires. The resulting image is shared        ║
+ * ║    between BOTH the static and dynamic panels.               ║
+ * ║    This ensures both views always show the same picture.     ║
  * ║                                                              ║
  * ║  DYNAMIC INSPECTOR INTERACTION:                              ║
- * ║    Flux is prompted for a 2×2 grid composite image.         ║
- * ║    Container uses overflow:hidden + a 200%×200% image.       ║
- * ║    CSS transform:translate() pans to reveal each quadrant:  ║
+ * ║    The hero image is displayed in the dynamic panel with     ║
+ * ║    the CSS pan/zoom viewer. Rotate buttons let the user      ║
+ * ║    "zoom into" different regions of the same render.         ║
  * ║      [Front View]  → top-left     → translate(0%,    0%)   ║
  * ║      [Left Side]   → top-right    → translate(-50%,  0%)   ║
  * ║      [Right Side]  → bottom-left  → translate(0%,   -50%) ║
  * ║      [Back View]   → bottom-right → translate(-50%, -50%) ║
  * ║                                                              ║
- * ║  WATERMARKS (both boxes):                                   ║
+ * ║  WATERMARKS (both boxes — baked into downloaded file):      ║
  * ║    Top-left:     "Aslam Archispace — Protected Design"      ║
  * ║    Bottom-right: "© 2026 Architectural ERP"                 ║
+ * ║    Canvas compositing ensures watermarks appear in the      ║
+ * ║    actual downloaded PNG, not just as screen overlays.      ║
  * ║                                                              ║
  * ║  DOWNLOADS:                                                  ║
- * ║    Left box:  "⬇️ Static Render"                           ║
- * ║    Right box: "⬇️ Full Technical Grid"                     ║
+ * ║    Both boxes: _downloadWithWatermark() bakes watermarks    ║
+ * ║    onto the image via HTML Canvas before download.          ║
  * ╚══════════════════════════════════════════════════════════════╝
  */
 
@@ -3203,6 +3204,116 @@ function _renderBoxSpinner(boxId, headLabel, headBadge) {
         </span>
       </div>
     </div>`;
+}
+
+/**
+ * Bake both branded watermarks into the image using Canvas, then
+ * trigger a browser download of the composited PNG.
+ *
+ * Works for both data: URIs and cross-origin http/https URLs.
+ * For cross-origin URLs the image is fetched via fetch() → blob →
+ * createObjectURL so Canvas can drawImage() without tainting.
+ *
+ * @param {string} srcUrl   - raw image URL or data URI from Flux
+ * @param {string} filename - desired download filename
+ */
+async function _downloadWithWatermark(srcUrl, filename) {
+  try {
+    /* ── 1. Load image into an <img> element ─────────────────── */
+    let objectUrl = null;
+    let imgSrc    = srcUrl;
+
+    if (!srcUrl.startsWith('data:')) {
+      /* Fetch remote URL → blob to avoid canvas CORS taint */
+      const resp = await fetch(srcUrl);
+      const blob = await resp.blob();
+      objectUrl  = URL.createObjectURL(blob);
+      imgSrc     = objectUrl;
+    }
+
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          /* ── 2. Draw image onto canvas ─────────────────────── */
+          const canvas = document.createElement('canvas');
+          canvas.width  = img.naturalWidth  || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          /* ── 3. Watermark styling ──────────────────────────── */
+          const W = canvas.width;
+          const H = canvas.height;
+          const pad   = Math.round(W * 0.012);
+          const fsize = Math.round(W * 0.018);
+
+          ctx.font = `600 ${fsize}px "DM Sans", Arial, sans-serif`;
+
+          /* Helper: draw a pill-badge watermark */
+          function drawBadge(text, x, y, align) {
+            const tw  = ctx.measureText(text).width;
+            const bh  = fsize + pad * 1.4;
+            const bw  = tw    + pad * 2.2;
+            const bx  = align === 'right' ? x - bw : x;
+            const by  = y - bh * 0.72;
+
+            /* Background pill */
+            ctx.fillStyle = 'rgba(13,30,61,0.62)';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+              ctx.roundRect(bx, by, bw, bh, 5);
+            } else {
+              ctx.rect(bx, by, bw, bh);
+            }
+            ctx.fill();
+
+            /* Text */
+            ctx.fillStyle    = 'rgba(201,168,76,0.97)';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign    = align === 'right' ? 'right' : 'left';
+            ctx.fillText(text,
+              align === 'right' ? x - pad * 1.1 : bx + pad * 1.1,
+              by + bh / 2);
+          }
+
+          /* ── 4. Top-left badge ─────────────────────────────── */
+          drawBadge('Aslam Archispace \u2014 Protected Design',
+                    pad, pad * 3, 'left');
+
+          /* ── 5. Bottom-right badge ─────────────────────────── */
+          drawBadge('\u00A9 2026 Architectural ERP',
+                    W - pad, H - pad * 2, 'right');
+
+          /* ── 6. Trigger download ───────────────────────────── */
+          canvas.toBlob(blob2 => {
+            const a    = document.createElement('a');
+            a.href     = URL.createObjectURL(blob2);
+            a.download = filename;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            resolve();
+          }, 'image/png');
+
+        } catch (canvasErr) {
+          reject(canvasErr);
+        }
+      };
+      img.onerror = () => reject(new Error('Image load failed for watermarking'));
+      img.src = imgSrc;
+    });
+
+  } catch (err) {
+    /* Fallback: plain download without watermark baking */
+    console.warn('Watermark canvas failed, falling back to plain download:', err);
+    const a    = document.createElement('a');
+    a.href     = srcUrl;
+    a.download = filename;
+    a.click();
+    toast('Downloaded (watermark baking unavailable in this browser)', 'wn');
+  }
 }
 
 /**
@@ -3244,11 +3355,8 @@ function _injectHeroBox(url, type, style) {
 
     <!-- Actions row: download + status -->
     <div class="render-actions">
-      ${isData
-        ? `<a href="${url}" download="aslam-static-render-${Date.now()}.png"
-               class="btn btn-gold btn-sm">⬇️ Static Render</a>`
-        : `<a href="${url}" target="_blank"
-               class="btn btn-outline btn-sm">🔗 Open Full Size</a>`}
+      <button onclick="_downloadWithWatermark('${url}', 'aslam-static-render-${Date.now()}.png').catch(()=>{})"
+              class="btn btn-gold btn-sm">⬇️ Static Render</button>
       <span class="text-sm text-muted" style="margin-left:auto">✅ Saved to project</span>
     </div>`;
 }
@@ -3380,13 +3488,8 @@ function _injectDynamicBox(url) {
 
     <!-- Actions row -->
     <div class="render-actions" style="background:var(--navy)">
-      ${isData
-        ? `<a href="${url}" download="aslam-technical-grid-${Date.now()}.png"
-               class="btn btn-gold btn-sm">⬇️ Full Technical Grid</a>`
-        : `<a href="${url}" target="_blank"
-               class="btn btn-outline btn-sm"
-               style="color:var(--gold);border-color:rgba(201,168,76,.4)">
-               🔗 Open Full Grid</a>`}
+      <button onclick="_downloadWithWatermark('${url}', 'aslam-dynamic-render-${Date.now()}.png').catch(()=>{})"
+              class="btn btn-gold btn-sm">⬇️ Full Technical Grid</button>
       <span style="margin-left:auto;font-size:.72rem;color:rgba(201,168,76,.5)">
         All 4 elevations in one file
       </span>
@@ -3528,7 +3631,7 @@ async function generateRender() {
   const btn   = document.getElementById('btn-gen-render');
   const resEl = document.getElementById('ir-results');
   btn.disabled    = true;
-  btn.textContent = isDynamic ? '⏳ Generating 2 renders…' : '⏳ Generating…';
+  btn.textContent = '⏳ Generating…';
 
   resEl.innerHTML = `
     <div class="dual-render-grid" id="dual-render-grid"
@@ -3539,10 +3642,9 @@ async function generateRender() {
         : ''}
     </div>`;
 
-  /* ── Fire both calls in parallel ────────────────────────── */
-  const [heroRes, gridRes] = await Promise.allSettled([
+  /* ── Fire ONE call — hero image is shared by both panels ───── */
+  const [heroRes] = await Promise.allSettled([
     callOpenRouterImage(heroPrompt),
-    isDynamic ? callOpenRouterImage(gridPrompt) : Promise.resolve(null),
   ]);
 
   /* ── Handle Hero result ──────────────────────────────────── */
@@ -3559,30 +3661,18 @@ async function generateRender() {
     _injectHeroBox(url, type, style);
     /* Store globally so ad generator can attach this render */
     window._lastRenderUrl = url;
-    toast('Hero Perspective ready ✅', 'ok');
+
+    /* ── Inject the SAME image into the Dynamic Inspector ─── */
+    if (isDynamic) {
+      _injectDynamicBox(url);
+      toast('Hero Perspective & Dynamic Inspector ready ✅', 'ok');
+    } else {
+      toast('Hero Perspective ready ✅', 'ok');
+    }
   } else {
     _injectBoxError('render-box-static', '🎨 Hero Perspective', heroRes.reason);
-    toast('Hero render failed', 'err');
-  }
-
-  /* ── Handle Dynamic Grid result ──────────────────────────── */
-  if (isDynamic) {
-    if (gridRes.status === 'fulfilled' && gridRes.value) {
-      const url = gridRes.value;
-      if (_currentProjId) {
-        const p = DB.proj(_currentProjId);
-        if (p) {
-          p.renders = p.renders || [];
-          p.renders.unshift({ id: uid(), prompt: gridPrompt, url, isRot: true, ts: Date.now() });
-          DB.saveProj(p);
-        }
-      }
-      _injectDynamicBox(url);
-      toast('360° Dynamic Inspector ready ✅', 'ok');
-    } else {
-      _injectBoxError('render-box-rot', '🔄 360° Dynamic Inspector', gridRes.reason);
-      toast('Dynamic grid failed', 'wn');
-    }
+    if (isDynamic) _injectBoxError('render-box-rot', '🔄 360° Dynamic Inspector', heroRes.reason);
+    toast('Render failed', 'err');
   }
 
   /* ── Restore button ──────────────────────────────────────── */
@@ -3710,11 +3800,8 @@ function viewRenderHistory() {
             <div class="flex-row mt-8" style="gap:6px">
               <a href="${r.url}" target="_blank"
                  class="btn btn-outline btn-xs">🔗 View</a>
-              ${r.url.startsWith('data:')
-                ? `<a href="${r.url}"
-                       download="${r.isRot ? 'technical-grid' : 'static-render'}-${r.ts}.png"
-                       class="btn btn-gold btn-xs">⬇️</a>`
-                : ''}
+              <button onclick="_downloadWithWatermark('${r.url}', '${r.isRot ? 'technical-grid' : 'static-render'}-${r.ts}.png').catch(()=>{})"
+                      class="btn btn-gold btn-xs">⬇️</button>
             </div>
           </div>
         </div>`).join('')}
