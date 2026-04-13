@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aslam Archispace — Master ERP v23</title>
+  <title>Aslam Archispace — Master ERP v24</title>
   <style>
 /* ============================================================
    §1 — CSS: Variables, Layout, Typography, Components
@@ -1605,20 +1605,20 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
 <script>
 /*
  * ============================================================
- * §0 — CONFIG & MODEL REGISTRY  (v17 Hybrid-Model)
+ * §0 — CONFIG & MODEL REGISTRY  (v24 Hybrid-Model)
  * ============================================================
  * Cost-saving routing strategy:
- *   - 3D Renders   → flux-2-pro            (PAID, use sparingly)
- *   - BOQ/Finance  → qwen-2.5-72b:free     (FREE, best maths)
- *   - Vision/Audit → gemini-2.0-pro:free   (FREE, vision tasks)
- *   - Marketing    → gemini-flash-lite:free (FREE, fast copy)
+ *   - 3D Renders   → flux-2-pro              (PAID, use sparingly)
+ *   - BOQ/Finance  → qwen3.6-plus:free       (FREE, best maths)
+ *   - Vision/Audit → qwen2.5-vl-72b:free     (FREE, vision tasks)
+ *   - Marketing    → gemma-4-31b:free         (FREE, fast copy)
  *
  * All free models are capped at max_tokens:2000 to prevent
  * OpenRouter "Credit Reservation" errors on the free tier.
  * ============================================================
  */
 
-const APP_VERSION = 'v23.0';
+const APP_VERSION = 'v24.0';
 const APP_NAME    = 'Aslam Archispace';
 
 /* ── OpenRouter endpoint (exact URL required) ─────────────── */
@@ -1672,15 +1672,15 @@ const FETCH_TIMEOUT_FLUX_MS = 120000;  /* 120s — Flux image gen takes 60-90s *
 const MAX_RETRIES       = 3;
 const RETRY_BACKOFF_MS  = 1500;   /* multiplied by attempt number */
 
-/* ── 2026 OpenRouter Model IDs — exact strings required ───── */
+/* ── April 2026 OpenRouter Model IDs — exact strings required ─ */
 const MODELS = {
   render:    'black-forest-labs/flux.2-pro',                     /* PAID  — 3D image gen     */
-  estimate:  'qwen/qwen-2.5-72b-instruct:free',                  /* FREE  — maths/BOQ logic  */
-  finance:   'qwen/qwen-2.5-72b-instruct:free',                  /* FREE  — ledger analysis  */
-  cad:       'qwen/qwen-2.5-72b-instruct:free',                  /* FREE  — CAD/AutoLISP     */
-  vision:    'google/gemini-2.0-pro-exp-02-05:free',             /* FREE  — plan analysis    */
-  monitor:   'google/gemini-2.0-flash-lite-preview-02-05:free',  /* FREE  — site photo audit */
-  marketing: 'google/gemini-2.0-flash-lite-preview-02-05:free',  /* FREE  — fast ad copy     */
+  estimate:  'qwen/qwen3.6-plus:free',                           /* FREE  — maths/BOQ logic  */
+  finance:   'qwen/qwen3.6-plus:free',                           /* FREE  — ledger analysis  */
+  cad:       'qwen/qwen3.6-plus:free',                           /* FREE  — CAD/AutoLISP     */
+  vision:    'qwen/qwen2.5-vl-72b-instruct:free',               /* FREE  — plan analysis    */
+  monitor:   'google/gemma-4-31b-it:free',                       /* FREE  — site photo audit */
+  marketing: 'google/gemma-4-31b-it:free',                       /* FREE  — fast ad copy     */
 };
 
 /*
@@ -1690,9 +1690,9 @@ const MODELS = {
  */
 const MODEL_MAX_TOKENS = {
   'black-forest-labs/flux.2-pro':                         1,     /* image — N/A */
-  'qwen/qwen-2.5-72b-instruct:free':                   2000,     /* BOQ, finance, CAD */
-  'google/gemini-2.0-pro-exp-02-05:free':              2000,     /* plan vision */
-  'google/gemini-2.0-flash-lite-preview-02-05:free':   2000,     /* monitor, marketing */
+  'qwen/qwen3.6-plus:free':                            2000,     /* BOQ, finance, CAD */
+  'qwen/qwen2.5-vl-72b-instruct:free':                2000,     /* plan vision */
+  'google/gemma-4-31b-it:free':                        2000,     /* monitor, marketing */
 };
 
 /** Return the correct max_tokens value for a given model */
@@ -2524,7 +2524,7 @@ function deleteProject() {
  *   LEFT  — Document Intelligence (plan upload → Gemini vision)
  *   RIGHT — 3D Render generation (text prompt → Flux 2 Pro)
  *
- * Vision model:  google/gemini-2.0-pro-exp-02-05:free
+ * Vision model:  qwen/qwen2.5-vl-72b-instruct:free
  * Render model:  black-forest-labs/flux.2-pro  (PAID)
  *
  * PVR Audit (Plan vs Reality) runs inside the Site Report modal.
@@ -3820,7 +3820,7 @@ Be concise and factual.`
  * Financial gate: BOQ total is pushed to Finance (Pillar III)
  * via releaseToPillar3().
  *
- * AI suggestions use qwen-2.5-72b:free (best maths, free tier).
+ * AI suggestions use qwen3.6-plus:free (best maths, free tier).
  * ============================================================
  */
 
@@ -4271,7 +4271,7 @@ function releaseToPillar3() {
 
 /**
  * Request AI-generated BOQ items for a specific stage.
- * Uses qwen-2.5-72b:free (best free maths model) with cached
+ * Uses qwen3.6-plus:free (best free maths model) with cached
  * QS Surveyor system prompt (includes Ejigbo + laterite context).
  */
 async function openStageAI(stageId) {
@@ -4377,7 +4377,7 @@ function applyAIResult() {
 
 /**
  * Full BOQ review: send all stage totals to AI for professional critique.
- * Uses qwen-2.5-72b:free with cached QS Surveyor system.
+ * Uses qwen3.6-plus:free with cached QS Surveyor system.
  */
 async function openEstimateAI() {
   if (!_currentProjId) { toast('Select a project first', 'wn'); return; }
@@ -4680,7 +4680,7 @@ function printClientQuotation() {
  *     - Stage has no BOQ (est = 0) → unlocked (no estimate set)
  *     - All stages at 100%         → always unlocked
  *
- * AI audit uses qwen-2.5-72b:free (best free finance logic).
+ * AI audit uses qwen3.6-plus:free (best free finance logic).
  * ============================================================
  */
 
@@ -4959,7 +4959,7 @@ function deleteRelease(pid, idx) {
 
 /**
  * Run AI cash flow + risk assessment on the project finances.
- * Uses qwen-2.5-72b:free with cached financeAudit system prompt.
+ * Uses qwen3.6-plus:free with cached financeAudit system prompt.
  */
 async function runFinanceAI() {
   const pid = _currentProjId;
@@ -5025,7 +5025,7 @@ async function runFinanceAI() {
  * If locked → lock banner shown, content hidden.
  * If unlocked → stage cards rendered with site visit history.
  *
- * Vision model: google/gemini-2.0-pro-exp-02-05:free
+ * Vision model: qwen/qwen2.5-vl-72b-instruct:free
  * Structural audit runs inside the site report modal (PVR).
  * ============================================================
  */
@@ -5237,9 +5237,9 @@ function submitSiteReport() {
  *   📢 Marketing     — AI ad copy generator (Gemini Flash Lite)
  *   🗄️ Archive       — completed projects with AI summaries
  *
- * Marketing uses gemini-2.0-flash-lite-preview-02-05:free
+ * Marketing uses google/gemma-4-31b-it:free
  * (fastest & cheapest for ad copy generation).
- * All other AI uses qwen-2.5-72b:free with cached QS Surveyor.
+ * All other AI uses qwen3.6-plus:free with cached QS Surveyor.
  * ============================================================
  */
 
@@ -5331,7 +5331,7 @@ function renderStageReports() {
 
 /**
  * Generate an AI stage completion summary for the client record.
- * Uses qwen-2.5-72b:free with cached QS Surveyor prompt.
+ * Uses qwen3.6-plus:free with cached QS Surveyor prompt.
  */
 async function generateStageAISummary(pid, stageId, stageLabel) {
   const key = DB.cfg().openrouter_key || '';
@@ -5381,7 +5381,7 @@ async function generateStageAISummary(pid, stageId, stageLabel) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MARKETING TAB  —  gemini-2.0-flash-lite-preview-02-05:free
+   MARKETING TAB  —  google/gemma-4-31b-it:free
    (Fast, free, ideal for ad copy. Ejigbo context via SYS.marketing)
    ═══════════════════════════════════════════════════════════ */
 
@@ -5392,7 +5392,7 @@ function renderMarketing() {
       <div class="card-head">
         <h2>📢 AI Ad Generator</h2>
         <span class="text-sm text-muted" style="margin-left:auto">
-          gemini-2.0-flash-lite · Free tier · Fast
+          gemma-4-31b · Free tier · Fast
         </span>
       </div>
       <div class="card-body">
@@ -5671,7 +5671,7 @@ function renderArchive() {
 
 /**
  * Generate a portfolio-quality project summary for the archive.
- * Uses qwen-2.5-72b:free with cached QS Surveyor system.
+ * Uses qwen3.6-plus:free with cached QS Surveyor system.
  */
 async function generateArchiveAI(pid) {
   const proj = DB.proj(pid);
@@ -5726,13 +5726,13 @@ async function generateArchiveAI(pid) {
  * §11 — OPENROUTER AI ENGINE  (Hybrid Model Router)
  * ============================================================
  *
- * ROUTING TABLE (2026 model IDs):
- *   render    → black-forest-labs/flux.2-pro          (PAID)
- *   estimate  → qwen/qwen-2.5-72b-instruct:free       (FREE)
- *   finance   → qwen/qwen-2.5-72b-instruct:free       (FREE)
- *   vision    → google/gemini-2.0-pro-exp-02-05:free  (FREE)
- *   monitor   → google/gemini-2.0-pro-exp-02-05:free  (FREE)
- *   marketing → google/gemini-2.0-flash-lite-preview-02-05:free (FREE)
+ * ROUTING TABLE (April 2026 model IDs):
+ *   render    → black-forest-labs/flux.2-pro              (PAID)
+ *   estimate  → qwen/qwen3.6-plus:free                    (FREE)
+ *   finance   → qwen/qwen3.6-plus:free                    (FREE)
+ *   vision    → qwen/qwen2.5-vl-72b-instruct:free        (FREE)
+ *   monitor   → google/gemma-4-31b-it:free                (FREE)
+ *   marketing → google/gemma-4-31b-it:free                (FREE)
  *
  * TOKEN POLICY:
  *   Free models: max_tokens: 2000 (prevents credit reservation errors)
@@ -5851,7 +5851,30 @@ async function callOpenRouter(model, messages, retries = MAX_RETRIES) {
         console.log(`[OR Cache Hit] ${model}: ${data.usage.cache_read_input_tokens} cached tokens`);
       }
 
-      const content = data.choices?.[0]?.message?.content;
+      /*
+       * Extract text content — handles multiple response shapes:
+       *   1. Standard:  choices[0].message.content = "string"
+       *   2. Array:     choices[0].message.content = [{type:"text", text:"..."}]
+       *   3. Qwen 3.x:  reasoning_content separate from content
+       *   4. Gemma:     same as standard
+       */
+      const msg = data.choices?.[0]?.message;
+      let content = null;
+      if (msg) {
+        if (typeof msg.content === 'string' && msg.content.trim()) {
+          content = msg.content;
+        } else if (Array.isArray(msg.content)) {
+          /* Array of blocks — extract text blocks only */
+          content = msg.content
+            .filter(b => b.type === 'text' && b.text)
+            .map(b => b.text)
+            .join('\n');
+        }
+        /* Fallback: if content is empty but reasoning_content exists */
+        if (!content && typeof msg.reasoning_content === 'string' && msg.reasoning_content.trim()) {
+          content = msg.reasoning_content;
+        }
+      }
       if (!content) {
         if (attempt < retries) { await sleep(RETRY_BACKOFF_MS * attempt); continue; }
         throw new Error('Empty response from AI model. Please retry.');
@@ -6022,7 +6045,7 @@ async function callOpenRouterImage(prompt) {
  * Generates professional AutoLISP (.lsp) scripts from project
  * data using Qwen 72B (free, best math/code model).
  *
- * ROUTING: MODELS.cad → qwen/qwen-2.5-72b-instruct:free
+ * ROUTING: MODELS.cad → qwen/qwen3.6-plus:free
  *
  * PROMPT CONTEXT (auto-injected):
  *   • Ejigbo, Osun State location
@@ -6192,16 +6215,16 @@ function renderSettings() {
       <div style="background:var(--grey1);border-radius:var(--r);
                   padding:12px 16px;border:1px solid var(--grey2)">
         <div class="text-sm" style="font-weight:700;color:var(--navy);margin-bottom:6px">
-          💡 v19 Hybrid-Model Routing (2026 OpenRouter IDs)
+          💡 v24 Hybrid-Model Routing (April 2026 OpenRouter IDs)
         </div>
         <div class="text-sm text-muted" style="line-height:1.9">
           • <strong>3D Renders:</strong> black-forest-labs/flux.2-pro
             <span style="color:#e65100;font-weight:700">PAID — use sparingly</span><br>
-          • <strong>BOQ &amp; Finance:</strong> qwen/qwen-2.5-72b-instruct:free
+          • <strong>BOQ &amp; Finance:</strong> qwen/qwen3.6-plus:free
             <span style="color:#2e7d32">FREE — best maths accuracy</span><br>
-          • <strong>Vision &amp; Site Audit:</strong> google/gemini-2.0-pro-exp-02-05:free
+          • <strong>Vision &amp; Site Audit:</strong> qwen/qwen2.5-vl-72b-instruct:free
             <span style="color:#2e7d32">FREE — vision capable</span><br>
-          • <strong>Marketing Ads:</strong> google/gemini-2.0-flash-lite-preview-02-05:free
+          • <strong>Marketing Ads:</strong> google/gemma-4-31b-it:free
             <span style="color:#2e7d32">FREE — fast ad copy</span><br>
           • <strong>max_tokens:</strong> 2,000 for all free models
             (prevents "Credit Reservation" errors)<br>
@@ -6215,7 +6238,7 @@ function renderSettings() {
 
     <!-- ── MODEL REGISTRY ────────────────────────────────── -->
     <div class="settings-section">
-      <h3>🤖 AI Model Registry — v19 Hybrid</h3>
+      <h3>🤖 AI Model Registry — v24 Hybrid</h3>
       <div class="text-sm text-muted mb-12">
         Only Flux 2 Pro (3D renders) uses OpenRouter credits.
         All other models are free-tier.
