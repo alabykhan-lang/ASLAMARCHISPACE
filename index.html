@@ -1612,10 +1612,12 @@ hr.gold     { border-color: rgba(201,168,76,.3); }
  *   - BOQ/CAD      → meta-llama-3.3-70b:free   (FREE, strong general)
  *   - Finance      → meta-llama-3.3-70b:free   (FREE, strong general)
  *   - Vision/Audit → nvidia-nemotron-nano-12b-v2-vl:free (FREE, vision)
- *   - Marketing    → google/gemma-4-31b:free    (FREE, fast copy)
+ *   - Marketing    → google/gemini-2.0-flash-001  (PAID, fast copy)
+ *   - CAD          → google/gemini-2.0-flash-001  (PAID, CAD/AutoLISP)
  *
  * All free models are capped at max_tokens:2000 to prevent
  * OpenRouter "Credit Reservation" errors on the free tier.
+ * Paid models (CAD, marketing) use higher token limits.
  * ============================================================
  */
 
@@ -1678,10 +1680,10 @@ const MODELS = {
   render:    'black-forest-labs/flux.2-pro',                     /* PAID  — 3D image gen     */
   estimate:  'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — maths/BOQ logic  */
   finance:   'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — ledger analysis  */
-  cad:       'meta-llama/llama-3.3-70b-instruct:free',           /* FREE  — CAD/AutoLISP     */
+  cad:       'google/gemini-2.0-flash-001',                       /* PAID  — CAD/AutoLISP     */
   vision:    'nvidia/nemotron-nano-12b-v2-vl:free',              /* FREE  — plan analysis    */
   monitor:   'google/gemma-4-31b-it:free',                       /* FREE  — site photo audit */
-  marketing: 'google/gemma-4-31b-it:free',                       /* FREE  — fast ad copy     */
+  marketing: 'google/gemini-2.0-flash-001',                       /* PAID  — fast ad copy     */
 };
 
 /*
@@ -1691,9 +1693,10 @@ const MODELS = {
  */
 const MODEL_MAX_TOKENS = {
   'black-forest-labs/flux.2-pro':                         1,     /* image — N/A */
-  'meta-llama/llama-3.3-70b-instruct:free':            2000,     /* BOQ, finance, CAD */
+  'meta-llama/llama-3.3-70b-instruct:free':            2000,     /* BOQ, finance */
   'nvidia/nemotron-nano-12b-v2-vl:free':               2000,     /* plan vision */
-  'google/gemma-4-31b-it:free':                        2000,     /* monitor, marketing */
+  'google/gemma-4-31b-it:free':                        2000,     /* monitor */
+  'google/gemini-2.0-flash-001':                       4000,     /* CAD, marketing (paid) */
 };
 
 /** Return the correct max_tokens value for a given model */
@@ -2901,7 +2904,7 @@ async function generateCADFromIntel() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
   resEl.innerHTML = `<div class="ai-spinner">
     <div class="spin"></div>
-    <span>Generating AutoLISP script via Qwen 72B (free)…</span>
+    <span>Generating AutoLISP script via Gemini 2.0 Flash…</span>
   </div>`;
 
   try {
@@ -5240,8 +5243,8 @@ function submitSiteReport() {
  *   📢 Marketing     — AI ad copy generator (Gemini Flash Lite)
  *   🗄️ Archive       — completed projects with AI summaries
  *
- * Marketing uses google/gemma-4-31b-it:free
- * (fastest & cheapest for ad copy generation).
+ * Marketing uses google/gemini-2.0-flash-001
+ * (fastest & best for ad copy generation — paid tier).
  * All other AI uses llama-3.3-70b:free with cached QS Surveyor.
  * ============================================================
  */
@@ -5384,8 +5387,8 @@ async function generateStageAISummary(pid, stageId, stageLabel) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MARKETING TAB  —  google/gemma-4-31b-it:free
-   (Fast, free, ideal for ad copy. Ejigbo context via SYS.marketing)
+   MARKETING TAB  —  google/gemini-2.0-flash-001
+   (Paid, fast, ideal for ad copy. Ejigbo context via SYS.marketing)
    ═══════════════════════════════════════════════════════════ */
 
 function renderMarketing() {
@@ -5459,7 +5462,7 @@ function renderMarketing() {
 }
 
 /**
- * Generate ad copy using Gemini Flash Lite (free, fast).
+ * Generate ad copy using Gemini 2.0 Flash (paid, fast).
  * SYS.marketing is cached and includes Ejigbo/laterite brand context.
  * After generation, injects WhatsApp + Facebook share buttons.
  */
@@ -5476,7 +5479,7 @@ async function generateAdInline() {
   const el = document.getElementById('ad-result-inline');
   el.innerHTML = `<div class="ai-spinner">
     <div class="spin"></div>
-    <span>Crafting ad copy (Gemma 4 31B — free tier)…</span>
+    <span>Crafting ad copy (Gemini 2.0 Flash — paid)…</span>
   </div>`;
 
   try {
